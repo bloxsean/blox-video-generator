@@ -1,0 +1,34 @@
+.workflow-stepper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 2rem auto;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.guidance-message {
+  color: #666;
+  font-size: 14px;
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+/* Make steps more clickable when they can be used for navigation */
+.workflow-stepper .MuiStepLabel-root {
+  cursor: inherit;
+}
+
+.workflow-stepper .MuiStepLabel-root:hover .MuiStepLabel-label {
+  color: #3b82f6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .workflow-stepper {
+    padding: 0.75rem;
+  }
+} 

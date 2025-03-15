@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="320" height="180" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="320" height="180" fill="#f3f4f6"/>
+  
+  <!-- Decorative elements -->
+  <rect x="24" y="24" width="272" height="132" rx="8" fill="#e5e7eb" stroke="#d1d5db" stroke-width="2"/>
+  
+  <!-- Camera icon -->
+  <g transform="translate(128, 60)">
+    <rect x="-24" y="-16" width="48" height="32" rx="4" fill="#9ca3af"/>
+    <circle cx="0" cy="0" r="12" fill="#6b7280"/>
+    <circle cx="0" cy="0" r="6" fill="#4b5563"/>
+    <rect x="24" y="-8" width="12" height="16" rx="2" fill="#9ca3af"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="160" y="120" font-family="Arial, sans-serif" font-size="14" fill="#6b7280" text-anchor="middle">Video Preview Not Available</text>
+</svg> 
