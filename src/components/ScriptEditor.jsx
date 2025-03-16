@@ -117,6 +117,10 @@ const ScriptEditor = () => {
   // Script validation
   const isScriptValid = localScript && localScript.trim().length >= 10;
 
+  useEffect(() => {
+    console.log('Selected Avatar:', selectedAvatar);
+  }, [selectedAvatar]);
+
   return (
     <div className="script-editor">
       <div className="script-editor-header">
@@ -154,42 +158,105 @@ const ScriptEditor = () => {
         </div>
       ) : (
         <div className="script-editor-content">
-          <div className="script-info">
-            <div className="voice-avatar-preview">
-              <div className="selected-item">
-                <label>Voice:</label>
-                <span className="selected-value">{selectedVoice?.name}</span>
-              </div>
-              <Avatar
-                src={selectedAvatar.preview_image_url}
-                alt={selectedAvatar.avatar_name}
-                sx={{ width: 70, height: 70 }}
-              >
-                {!selectedAvatar.preview_image_url && selectedAvatar.avatar_name?.charAt(0)}
-              </Avatar>
-              <div className="selected-item">
-                <label>Avatar:</label>
-                <span className="selected-value">{selectedAvatar?.avatar_name}</span>
-              </div>
-            </div>
+          
+          
+          <div className="two-column-layout">
+          <div className="tips-column">
+          <div className="create-info-container">
+            <div className="info-container">
             
-            <div className="script-stats">
-              <div className="stat-item">
-                <label>Word Count:</label>
-                <span className={wordCount < 10 ? 'warning' : 'stat-value'}>{wordCount}</span>
-                {wordCount < 10 && <span className="min-requirement">(Min: 10)</span>}
+              <div className="info-row">
+              <div className="avatar-cell avatar-cell">
+                <span className="info-label">Voice:</span>
+                </div>
+                <div className="avatar-cell avatar-cell">
+                  <span className="info-value">{selectedVoice?.name}</span>
+                </div>
+              </div> 
+
+              {/* <div className="info-row">
+                  <div className="avatar-cell">
+                    <span className="info-label">Est. Duration:</span>
+                  </div>
+                  <div className="avatar-cell">
+                    <span className="info-value">{estimatedDuration.toFixed(1)} min</span>
+                  </div>
+              </div> */}
+
+
+
+              <div className="info-row">
+                {/* Column 1 */}
+             
+                  <span className="info-label">Word Count:</span>
+                  <span className={wordCount < 10 ? 'warning-value' : 'info-value'}>{wordCount}</span>
+                  {wordCount < 10 && <span className="min-requirement">(Min: 10)</span>}
+             
               </div>
-              <div className="stat-item">
-                <label>Est. Duration:</label>
-                <span className="stat-value">{estimatedDuration.toFixed(1)} min</span>
+              
+              <div className="info-row">
+                  <div className="avatar-cell">
+                    <span className="info-label">Est. Duration:</span>
+                  </div>
+                  <div className="avatar-cell">
+                    <span className="info-value">{estimatedDuration.toFixed(1)} min</span>
+                  </div>
+              </div>
+
+              {/* Row 2 */}
+              <div className="info-row">
+                {/* Column 1 */}
+               
+                  <div className="info-cell avatar-cell">
+                    <Avatar
+                      src={selectedAvatar.preview_image_url}
+                      alt={selectedAvatar.avatar_name}
+                      sx={{ width: 70, height: 70 }}
+                    >
+                      {!selectedAvatar.preview_image_url && selectedAvatar.avatar_name?.charAt(0)}
+                    </Avatar>
+                    <div className="avatar-label">
+                      <span className="info-label">Avatar:</span>
+                      <span className="info-value">
+                        {selectedAvatar?.avatar_name || 'No avatar selected'}
+                      </span>
+                    </div>
+                  </div>
+                
+                {/* Column 2 */}
+               
               </div>
             </div>
           </div>
-          
-          <div className="two-column-layout">
+              <div className="script-tips-container">
+                <h4 className="tips-header">Tips for a better script:</h4>
+                <div className="tips-list">
+                  <div className="tip-item">
+                    <div className="tip-icon">📝</div>
+                    <p>Keep sentences short and clear</p>
+                  </div>
+                  <div className="tip-item">
+                    <div className="tip-icon">🔤</div>
+                    <p>Avoid complex terminology unless necessary</p>
+                  </div>
+                  <div className="tip-item">
+                    <div className="tip-icon">🗣️</div>
+                    <p>Write as you would speak naturally</p>
+                  </div>
+                  <div className="tip-item">
+                    <div className="tip-icon">⏸️</div>
+                    <p>Add pauses with commas and periods</p>
+                  </div>
+                  <div className="tip-item">
+                    <div className="tip-icon">🔊</div>
+                    <p>Read your script aloud to test flow</p>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div className="script-column">
               <div className="script-textarea-container">
-                <label htmlFor="script-textarea" className="textarea-label">Enter your script:</label>
+                <label htmlFor="script-textarea" className="textarea-label"><h2>Enter your script:</h2></label>
                 <textarea
                   id="script-textarea"
                   className="script-textarea"
@@ -222,33 +289,7 @@ const ScriptEditor = () => {
               </div>
             </div>
             
-            <div className="tips-column">
-              <div className="script-tips-container">
-                <h4 className="tips-header">Tips for a better script:</h4>
-                <div className="tips-list">
-                  <div className="tip-item">
-                    <div className="tip-icon">📝</div>
-                    <p>Keep sentences short and clear</p>
-                  </div>
-                  <div className="tip-item">
-                    <div className="tip-icon">🔤</div>
-                    <p>Avoid complex terminology unless necessary</p>
-                  </div>
-                  <div className="tip-item">
-                    <div className="tip-icon">🗣️</div>
-                    <p>Write as you would speak naturally</p>
-                  </div>
-                  <div className="tip-item">
-                    <div className="tip-icon">⏸️</div>
-                    <p>Add pauses with commas and periods</p>
-                  </div>
-                  <div className="tip-item">
-                    <div className="tip-icon">🔊</div>
-                    <p>Read your script aloud to test flow</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          
           </div>
         </div>
       )}
