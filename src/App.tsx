@@ -1,153 +1,74 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './App.css';
 import Home from './components/Home';
 import VoiceBrowser from './components/VoiceBrowser';
 import AvatarBrowser from './components/AvatarBrowser';
 import ScriptEditor from './components/ScriptEditor';
-import WorkflowPanel from './components/WorkflowPanel';
 import VideoList from './components/VideoList';
+import { useNavigation } from './contexts/NavigationContext';
+import { FiVideo, FiMic, FiUser, FiEdit, FiHome } from 'react-icons/fi';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home');
-  
-  // State for selected items
-  const [selectedVoice, setSelectedVoice] = useState(null);
-  const [selectedAvatar, setSelectedAvatar] = useState(null);
-  const [scriptContent, setScriptContent] = useState('');
-  
-  // State for workflow panel
-  const [showWorkflow, setShowWorkflow] = useState(true);
-  
-  // Handle voice selection
-  const handleVoiceSelect = (voice) => {
-    setSelectedVoice(voice);
-    console.log('Selected voice:', voice);
+  const { activeTab, navigateToTab } = useNavigation();
+
+  const handleNavigation = (tabName: string) => {
+    console.log('Navigating to:', tabName);
+    navigateToTab(tabName);
   };
-  
-  // Handle avatar selection
-  const handleAvatarSelect = (avatar) => {
-    setSelectedAvatar(avatar);
-    console.log('Selected avatar:', avatar);
-  };
-  
-  // Handle script changes
-  const handleScriptChange = (script) => {
-    setScriptContent(script);
-  };
-  
-  // Determine workflow progress
-  const hasVoice = selectedVoice !== null;
-  const hasAvatar = selectedAvatar !== null;
-  const hasScript = scriptContent.trim().length > 0;
-  
-  // Function to handle tab changes
-  const changeTab = (tabName) => {
-    setActiveTab(tabName);
-  };
-  
-  // Toggle workflow panel visibility
-  const toggleWorkflow = () => {
-    setShowWorkflow(!showWorkflow);
-  };
-  
-  // Effect to guide new users to the workflow
-  useEffect(() => {
-    // If no selections made and on home screen, show workflow panel
-    if (!hasVoice && !hasAvatar && !hasScript && activeTab === 'home') {
-      setShowWorkflow(true);
-    }
-  }, [activeTab, hasVoice, hasAvatar, hasScript]);
+
+  const navItems = [
+    { id: 'home', label: 'Home', icon: <FiHome /> },
+    { id: 'voices', label: 'Voices', icon: <FiMic /> },
+    { id: 'avatars', label: 'Avatars', icon: <FiUser /> },
+    { id: 'script', label: 'Script', icon: <FiEdit /> },
+    { id: 'videos', label: 'Videos', icon: <FiVideo /> },
+  ];
 
   return (
     <div className="app">
       <header className="app-header">
-        <div className="logo">AI Video Generator</div>
-        <nav className="tabs">
-          <button 
-            className={activeTab === 'home' ? 'active' : ''} 
-            onClick={() => changeTab('home')}
-          >
-            Home
-          </button>
-          <button 
-            className={activeTab === 'voices' ? 'active' : ''} 
-            onClick={() => changeTab('voices')}
-          >
-            Voices
-            {hasVoice && <span className="selection-indicator">✓</span>}
-          </button>
-          <button 
-            className={activeTab === 'avatars' ? 'active' : ''} 
-            onClick={() => changeTab('avatars')}
-          >
-            Avatars
-            {hasAvatar && <span className="selection-indicator">✓</span>}
-          </button>
-          <button 
-            className={activeTab === 'script' ? 'active' : ''} 
-            onClick={() => changeTab('script')}
-          >
-            Script
-            {hasScript && <span className="selection-indicator">✓</span>}
-          </button>
-          <button 
-            className={activeTab === 'videos' ? 'active' : ''} 
-            onClick={() => changeTab('videos')}
-          >
-            Videos
-          </button>
-        </nav>
-        <div className="actions">
-          <button 
-            className="workflow-toggle"
-            onClick={toggleWorkflow}
-            title={showWorkflow ? 'Hide workflow panel' : 'Show workflow panel'}
-          >
-            {showWorkflow ? 'Hide Guide' : 'Show Guide'}
-          </button>
+        <div className="header-content">
+          <div className="logo-container">
+            <div 
+              className="logo" 
+              onClick={() => handleNavigation('home')}
+              style={{ cursor: 'pointer' }}
+            >
+              <svg viewBox="0 0 24 24">
+                <defs>
+                  <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#818cf8" />
+                  </linearGradient>
+                </defs>
+                <path d="M13 2.5V6h1.5v2h-7V6H9V2.5L12 1l1 1.5zM12 7.5c.69 0 1.25.56 1.25 1.25S12.69 10 12 10s-1.25-.56-1.25-1.25S11.31 7.5 12 7.5zM11 11h2v9h-2v-9z" />
+              </svg>
+              HeyGen
+            </div>
+          </div>
+
+          <nav className="nav-menu">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+                onClick={() => handleNavigation(item.id)}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
       </header>
 
-      <main className="app-content">
-        {activeTab === 'home' && <Home onGetStarted={() => changeTab('voices')} />}
-        
-        {activeTab === 'voices' && (
-          <VoiceBrowser 
-            onVoiceSelect={handleVoiceSelect}
-            selectedVoice={selectedVoice}
-          />
-        )}
-        
-        {activeTab === 'avatars' && (
-          <AvatarBrowser 
-            onAvatarSelect={handleAvatarSelect}
-            selectedAvatar={selectedAvatar}
-          />
-        )}
-        
-        {activeTab === 'script' && (
-          <ScriptEditor
-            selectedVoice={selectedVoice}
-            selectedAvatar={selectedAvatar}
-            scriptContent={scriptContent}
-            onScriptChange={handleScriptChange}
-          />
-        )}
-        
-        {activeTab === 'videos' && (
-          <VideoList />
-        )}
+      <main className="main-content">
+        {activeTab === 'home' && <Home />}
+        {activeTab === 'voices' && <VoiceBrowser />}
+        {activeTab === 'avatars' && <AvatarBrowser />}
+        {activeTab === 'script' && <ScriptEditor />}
+        {activeTab === 'videos' && <VideoList />}
       </main>
-      
-      <WorkflowPanel
-        hasVoice={hasVoice}
-        hasAvatar={hasAvatar}
-        hasScript={hasScript}
-        activeTab={activeTab}
-        onTabChange={changeTab}
-        onClose={() => setShowWorkflow(false)}
-        visible={showWorkflow && activeTab !== 'home'}
-      />
     </div>
   );
 }

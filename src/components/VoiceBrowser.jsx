@@ -3,6 +3,8 @@ import axios from 'axios';
 import './VoiceBrowser.css';
 import WorkflowStepper from './WorkflowStepper';
 import { useNavigation } from '../contexts/NavigationContext';
+import { FiPlay, FiPause, FiX } from 'react-icons/fi';
+import { LinearProgress } from '@mui/material';
 
 // Configure axios defaults
 const API_CONFIG = {
@@ -21,10 +23,12 @@ const STORAGE_KEYS = {
 const api = axios.create({
   baseURL: API_CONFIG.baseURL,
   timeout: API_CONFIG.timeout,
+  headers: {
+    'Accept': 'application/json'
+  }
 });
 
 const VoiceBrowser = () => {
-  // Use the navigation context instead of props
   const { 
     workflowState, 
     steps, 
@@ -40,8 +44,10 @@ const VoiceBrowser = () => {
   const [error, setError] = useState(null);
   const [voices, setVoices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [audioPlaying, setAudioPlaying] = useState(null);
-  const [debugInfo, setDebugInfo] = useState({});
+  const [playingVoice, setPlayingVoice] = useState(null);
+  const [audioElement, setAudioElement] = useState(null);
+  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+  const [currentVoiceInfo, setCurrentVoiceInfo] = useState(null);
 
   // Helper function to save voices to local storage
   const saveVoicesToLocalStorage = (voicesData) => {
@@ -64,7 +70,6 @@ const VoiceBrowser = () => {
         return null;
       }
       
-      // Check if cache is still valid (not expired)
       const now = Date.now();
       const cacheTime = parseInt(timestamp, 10);
       
@@ -82,7 +87,6 @@ const VoiceBrowser = () => {
 
   // Extract fetchVoices function so it can be reused
   const fetchVoices = async (skipCache = false) => {
-    // Try to get data from local storage first, unless skipCache is true
     if (!skipCache) {
       const cachedVoices = getVoicesFromLocalStorage();
       if (cachedVoices && cachedVoices.length > 0) {
@@ -95,78 +99,19 @@ const VoiceBrowser = () => {
     
     try {
       setLoading(true);
-      console.log('VoiceBrowser: Fetching voices from server...', {
-        baseURL: API_CONFIG.baseURL,
-        endpoint: API_CONFIG.voicesEndpoint
-      });
+      console.log('VoiceBrowser: Fetching voices from server...');
       
       const response = await api.get(API_CONFIG.voicesEndpoint);
-      console.log('VoiceBrowser: Response received:', response);
+      console.log('VoiceBrowser: Raw API response:', response.data);
       
-      // Extract voices
-      const responseData = response.data;
-      let extractedVoices = [];
-      
-      // Handle triple-nested data structure
-      if (responseData?.data?.data?.data?.data?.voices && Array.isArray(responseData.data.data.data.data.voices)) {
-        extractedVoices = responseData.data.data.data.data.voices;
-        console.log(`VoiceBrowser: Successfully loaded ${extractedVoices.length} voices from triple-nested structure`);
+      if (response.data?.data?.voices) {
+        const voicesData = response.data.data.voices;
+        setVoices(voicesData);
+        saveVoicesToLocalStorage(voicesData);
+        setError(null);
+      } else {
+        throw new Error('Invalid response format from API');
       }
-      // Handle double-nested data structure
-      else if (responseData?.data?.data?.data?.voices && Array.isArray(responseData.data.data.data.voices)) {
-        extractedVoices = responseData.data.data.data.voices;
-        console.log(`VoiceBrowser: Successfully loaded ${extractedVoices.length} voices from double-nested structure`);
-      }
-      // Handle single-nested data structure
-      else if (responseData?.data?.data?.voices && Array.isArray(responseData.data.data.voices)) {
-        extractedVoices = responseData.data.data.voices;
-        console.log(`VoiceBrowser: Successfully loaded ${extractedVoices.length} voices from single-nested structure`);
-      }
-      
-      // If no voices found using standard paths, try recursively finding them
-      if (extractedVoices.length === 0) {
-        const findArrayInNestedObject = (obj, arrayName, path = []) => {
-          if (!obj || typeof obj !== 'object') return null;
-          
-          if (Array.isArray(obj[arrayName])) {
-            return { path: [...path, arrayName], data: obj[arrayName] };
-          }
-          
-          for (const [key, value] of Object.entries(obj)) {
-            if (typeof value === 'object') {
-              const result = findArrayInNestedObject(value, arrayName, [...path, key]);
-              if (result) return result;
-            }
-          }
-          return null;
-        };
-        
-        const voicesResult = findArrayInNestedObject(responseData, 'voices');
-        if (voicesResult) {
-          extractedVoices = voicesResult.data;
-          console.log(`VoiceBrowser: Found voices at path: ${voicesResult.path.join('.')}, count: ${extractedVoices.length}`);
-        }
-      }
-      
-      // Save to state and local storage
-      setVoices(extractedVoices);
-      saveVoicesToLocalStorage(extractedVoices);
-      
-      setDebugInfo({
-        responseReceived: true,
-        responseStatus: response.status,
-        totalVoiceCount: extractedVoices.length,
-        dataPath: responseData?.data?.data?.data?.data?.voices ? 'data.data.data.data.voices' : 
-                 responseData?.data?.data?.data?.voices ? 'data.data.data.voices' : 
-                 responseData?.data?.data?.voices ? 'data.data.voices' : 
-                 responseData?.data?.voices ? 'data.voices' : 'unknown',
-        apiConfig: {
-          baseURL: API_CONFIG.baseURL,
-          endpoint: API_CONFIG.voicesEndpoint
-        }
-      });
-      
-      setLoading(false);
     } catch (err) {
       console.error('VoiceBrowser: Error fetching voices:', err);
       let errorMessage = 'Failed to fetch voices';
@@ -179,35 +124,20 @@ const VoiceBrowser = () => {
         }
       } else if (err.request) {
         if (err.code === 'ECONNABORTED') {
-          errorMessage = 'Request timed out. The server is taking too long to respond. Please try again later.';
+          errorMessage = 'Request timed out. The server is taking too long to respond.';
         } else {
           errorMessage = 'No response received from server. Please check if the server is running.';
         }
       }
       
-      // Try to use cached data if available when there's an error
       const cachedVoices = getVoicesFromLocalStorage();
       if (cachedVoices && cachedVoices.length > 0) {
-        console.log(`VoiceBrowser: Using ${cachedVoices.length} cached voices due to fetch error`);
         setVoices(cachedVoices);
         setError(`${errorMessage} (Using cached data)`);
       } else {
         setError(errorMessage);
       }
-      
-      setDebugInfo(prev => ({
-        ...prev,
-        error: errorMessage,
-        errorCode: err.code,
-        errorStack: err.stack,
-        errorResponse: err.response?.data,
-        requestConfig: {
-          baseURL: API_CONFIG.baseURL,
-          endpoint: API_CONFIG.voicesEndpoint,
-          timeout: API_CONFIG.timeout,
-          fullUrl: `${API_CONFIG.baseURL}${API_CONFIG.voicesEndpoint}`
-        }
-      }));
+    } finally {
       setLoading(false);
     }
   };
@@ -215,7 +145,6 @@ const VoiceBrowser = () => {
   useEffect(() => {
     fetchVoices();
     
-    // Add event listener for storage changes (for multi-tab support)
     const handleStorageChange = (e) => {
       if (e.key === STORAGE_KEYS.VOICES) {
         try {
@@ -233,10 +162,14 @@ const VoiceBrowser = () => {
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.src = '';
+      }
     };
   }, []);
 
-  // Function to handle voice selection - now uses context
+  // Function to handle voice selection
   const handleVoiceSelect = (voice) => {
     console.log('VoiceBrowser: Voice selected:', voice?.name || voice?.voice_name);
     selectVoice(voice);
@@ -246,175 +179,60 @@ const VoiceBrowser = () => {
   const isSelected = (voice) => {
     if (!selectedVoice) return false;
     
-    // Check both id and voice_id for compatibility
     const voiceId = voice.voice_id || voice.id;
     const selectedId = selectedVoice.voice_id || selectedVoice.id;
     
     return voiceId === selectedId;
   };
 
-  const playAudio = (audioUrl, voiceId) => {
-    // Stop any currently playing audio
-    if (audioPlaying) {
-      audioPlaying.pause();
-      audioPlaying.currentTime = 0;
+  // Function to play voice sample
+  const playVoiceSample = (voice) => {
+    if (!voice.preview_url) {
+      console.warn('No preview URL available for voice:', voice.name);
+      return;
     }
+
+    setCurrentVoiceInfo(voice);
+    setShowAudioPlayer(true);
+
+    // Create new audio element
+    const audio = new Audio(voice.preview_url);
     
-    // Remove any existing modal
-    const existingBackdrop = document.querySelector('.audio-backdrop');
-    if (existingBackdrop) {
-      document.body.removeChild(existingBackdrop);
-    }
+    audio.addEventListener('play', () => setPlayingVoice(voice.voice_id));
+    audio.addEventListener('pause', () => setPlayingVoice(null));
+    audio.addEventListener('ended', () => setPlayingVoice(null));
     
-    // Create modal container
-    const modalContainer = document.createElement('div');
-    modalContainer.className = 'audio-backdrop';
-    modalContainer.style.position = 'fixed';
-    modalContainer.style.top = '0';
-    modalContainer.style.left = '0';
-    modalContainer.style.width = '100%';
-    modalContainer.style.height = '100%';
-    modalContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
-    modalContainer.style.zIndex = '999';
-    modalContainer.style.display = 'flex';
-    modalContainer.style.justifyContent = 'center';
-    modalContainer.style.alignItems = 'center';
+    // Store the audio element
+    setAudioElement(audio);
     
-    // Create audio player container
-    const audioPlayerContainer = document.createElement('div');
-    audioPlayerContainer.style.backgroundColor = 'white';
-    audioPlayerContainer.style.borderRadius = '12px';
-    audioPlayerContainer.style.padding = '2rem';
-    audioPlayerContainer.style.maxWidth = '500px';
-    audioPlayerContainer.style.width = '90%';
-    audioPlayerContainer.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
-    
-    // Create audio element
-    const audioElement = document.createElement('audio');
-    audioElement.src = audioUrl;
-    audioElement.controls = true;
-    audioElement.autoplay = true;
-    audioElement.style.width = '100%';
-    audioElement.style.marginTop = '1rem';
-    
-    // Create title for the audio player
-    const audioTitle = document.createElement('h3');
-    audioTitle.textContent = 'Voice Sample';
-    audioTitle.style.margin = '0 0 1rem 0';
-    audioTitle.style.fontSize = '1.25rem';
-    audioTitle.style.fontWeight = '600';
-    audioTitle.style.color = '#1f2937';
-    
-    // Create close button
-    const closeButton = document.createElement('button');
-    closeButton.textContent = '×';
-    closeButton.style.position = 'absolute';
-    closeButton.style.top = '20px';
-    closeButton.style.right = '20px';
-    closeButton.style.backgroundColor = 'white';
-    closeButton.style.color = 'black';
-    closeButton.style.border = 'none';
-    closeButton.style.borderRadius = '50%';
-    closeButton.style.width = '40px';
-    closeButton.style.height = '40px';
-    closeButton.style.fontSize = '24px';
-    closeButton.style.cursor = 'pointer';
-    closeButton.style.display = 'flex';
-    closeButton.style.justifyContent = 'center';
-    closeButton.style.alignItems = 'center';
-    closeButton.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-    closeButton.style.transition = 'transform 0.2s';
-    
-    // Hover effect
-    closeButton.onmouseover = () => {
-      closeButton.style.transform = 'scale(1.1)';
-    };
-    closeButton.onmouseout = () => {
-      closeButton.style.transform = 'scale(1)';
-    };
-    
-    // Add loading indicator
-    const loadingIndicator = document.createElement('div');
-    loadingIndicator.textContent = 'Loading audio...';
-    loadingIndicator.style.color = '#6b7280';
-    loadingIndicator.style.textAlign = 'center';
-    loadingIndicator.style.padding = '1rem';
-    
-    // Function to close the modal
-    const closeModal = () => {
-      audioElement.pause();
-      document.body.removeChild(modalContainer);
-      document.removeEventListener('keydown', handleEscape);
-    };
-    
-    // Close on backdrop click (but not on audio player click)
-    modalContainer.addEventListener('click', (e) => {
-      if (e.target === modalContainer) {
-        closeModal();
-      }
+    // Play the audio
+    audio.play().catch(err => {
+      console.error('Error playing audio:', err);
     });
-    
-    // Close on button click
-    closeButton.addEventListener('click', closeModal);
-    
-    // Close when escape key is pressed
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        closeModal();
-      }
-    };
-    
-    document.addEventListener('keydown', handleEscape);
-    
-    // Handle audio loading events
-    audioElement.addEventListener('loadstart', () => {
-      audioPlayerContainer.appendChild(loadingIndicator);
-    });
-    
-    audioElement.addEventListener('canplay', () => {
-      if (audioPlayerContainer.contains(loadingIndicator)) {
-        audioPlayerContainer.removeChild(loadingIndicator);
-      }
-    });
-    
-    audioElement.addEventListener('error', () => {
-      if (audioPlayerContainer.contains(loadingIndicator)) {
-        loadingIndicator.textContent = 'Error loading audio';
-      } else {
-        const errorMessage = document.createElement('div');
-        errorMessage.textContent = 'Error loading audio';
-        errorMessage.style.color = '#ef4444';
-        errorMessage.style.textAlign = 'center';
-        errorMessage.style.padding = '1rem';
-        audioPlayerContainer.appendChild(errorMessage);
-      }
-    });
-    
-    // Add elements to containers
-    audioPlayerContainer.appendChild(audioTitle);
-    audioPlayerContainer.appendChild(audioElement);
-    
-    modalContainer.appendChild(audioPlayerContainer);
-    modalContainer.appendChild(closeButton);
-    
-    // Add modal to body
-    document.body.appendChild(modalContainer);
-    
-    setAudioPlaying(audioElement);
   };
 
-  // Handle stepper navigation - now uses context
+  // Function to stop voice sample
+  const stopVoiceSample = () => {
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    }
+    setPlayingVoice(null);
+    setShowAudioPlayer(false);
+    setCurrentVoiceInfo(null);
+  };
+
+  // Handle stepper navigation
   const handleNext = () => {
-    console.log('VoiceBrowser: Next button clicked, navigating to next step');
+    console.log('VoiceBrowser: Next button clicked');
     goToNextStep();
   };
   
   const handleBack = () => {
-    console.log('VoiceBrowser: Back button clicked, navigating to previous step');
+    console.log('VoiceBrowser: Back button clicked');
     goToPreviousStep();
   };
   
-  // Step click handler - now uses context
   const handleStepClick = (tabName) => {
     console.log(`VoiceBrowser: Step clicked, navigating to ${tabName}`);
     navigateToTab(tabName);
@@ -422,7 +240,22 @@ const VoiceBrowser = () => {
 
   const renderContent = () => {
     if (loading) {
-      return <div className="loading-message">Loading voices...</div>;
+      return (
+        <div className="loading-message">
+          <div>Loading voices...</div>
+          <LinearProgress 
+            sx={{ 
+              width: '100%', 
+              maxWidth: '300px', 
+              marginTop: '1rem',
+              backgroundColor: 'rgba(56, 189, 248, 0.2)',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: '#38bdf8'
+              }
+            }} 
+          />
+        </div>
+      );
     }
 
     if (error) {
@@ -445,7 +278,7 @@ const VoiceBrowser = () => {
               onClick={() => {
                 setLoading(true);
                 setError(null);
-                fetchVoices(true); // Skip cache
+                fetchVoices(true);
               }}
             >
               Force Refresh
@@ -455,11 +288,9 @@ const VoiceBrowser = () => {
       );
     }
 
-    // Filter voices by search term
     const filteredVoices = voices.filter(voice => {
       if (!searchTerm) return true;
       
-      // Use voice_name or name, whichever is available
       const voiceName = (voice.voice_name || voice.name || '').toLowerCase();
       return voiceName.includes(searchTerm.toLowerCase());
     });
@@ -513,20 +344,34 @@ const VoiceBrowser = () => {
             <div className="voice-actions">
               {voice.preview_url && (
                 <button 
-                  className="play-sample-btn"
+                  className={`play-sample-btn ${playingVoice === voice.voice_id ? 'playing' : ''}`}
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering voice selection
-                    playAudio(voice.preview_url, voice.id);
+                    e.stopPropagation();
+                    if (playingVoice === voice.voice_id) {
+                      stopVoiceSample();
+                    } else {
+                      playVoiceSample(voice);
+                    }
                   }}
                 >
-                  Play Sample
+                  {playingVoice === voice.voice_id ? (
+                    <>
+                      <FiPause />
+                      Stop Preview
+                    </>
+                  ) : (
+                    <>
+                      <FiPlay />
+                      Play Preview
+                    </>
+                  )}
                 </button>
               )}
               
               <button 
                 className={`select-voice-btn ${isSelected(voice) ? 'selected' : ''}`}
                 onClick={(e) => {
-                  e.stopPropagation(); // Avoid duplicate selection
+                  e.stopPropagation();
                   handleVoiceSelect(voice);
                 }}
               >
@@ -566,7 +411,7 @@ const VoiceBrowser = () => {
             className="refresh-button"
             onClick={() => {
               setLoading(true);
-              fetchVoices(true); // Skip cache
+              fetchVoices(true);
             }}
             title="Refresh voices from server"
           >
@@ -594,8 +439,34 @@ const VoiceBrowser = () => {
       <div className="voice-content">
         {renderContent()}
       </div>
+
+      {/* Audio Player Modal */}
+      {showAudioPlayer && currentVoiceInfo && (
+        <div className="audio-backdrop" onClick={stopVoiceSample}>
+          <div className="audio-player" onClick={e => e.stopPropagation()}>
+            <div className="audio-player-header">
+              <div className="audio-player-title">
+                {currentVoiceInfo.voice_name || currentVoiceInfo.name}
+              </div>
+              <button className="close-button" onClick={stopVoiceSample}>
+                <FiX />
+              </button>
+            </div>
+            <audio
+              controls
+              autoPlay
+              src={currentVoiceInfo.preview_url}
+              onEnded={stopVoiceSample}
+              onError={() => {
+                console.error('Error playing audio sample');
+                stopVoiceSample();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default VoiceBrowser; 
+export default VoiceBrowser;

@@ -1,28 +1,12 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
-// Create the context with a default value
-const NavigationContext = createContext({
-  // Default values
-  activeTab: 'home',
-  workflowState: {
-    selectedVoice: null,
-    selectedAvatar: null,
-    scriptContent: '',
-    activeStep: 0,
-    completedSteps: {}
-  },
-  steps: [],
-  navigateToTab: () => console.warn('NavigateToTab called outside provider'),
-  goToNextStep: () => console.warn('GoToNextStep called outside provider'),
-  goToPreviousStep: () => console.warn('GoToPreviousStep called outside provider'),
-  updateWorkflowState: () => console.warn('UpdateWorkflowState called outside provider'),
-  completeStep: () => console.warn('CompleteStep called outside provider'),
-  selectVoice: () => console.warn('SelectVoice called outside provider'),
-  selectAvatar: () => console.warn('SelectAvatar called outside provider'),
-  updateScript: () => console.warn('UpdateScript called outside provider')
-});
+// Create the context
+const NavigationContext = createContext(null);
 
-// Define the workflow steps for the entire application
+// Define all available tabs
+const AVAILABLE_TABS = ['home', 'voices', 'avatars', 'script', 'videos'];
+
+// Define the workflow steps
 const WORKFLOW_STEPS = [
   {
     id: 'voices',
@@ -54,17 +38,9 @@ const WORKFLOW_STEPS = [
   }
 ];
 
-/**
- * Provider component for the navigation context
- */
 export const NavigationProvider = ({ children }) => {
-  // Debug initialization
-  console.log('NavigationProvider initializing...');
-  
-  // State for the active tab
+  // State for active tab and workflow
   const [activeTab, setActiveTab] = useState('home');
-  
-  // State for the workflow data
   const [workflowState, setWorkflowState] = useState({
     selectedVoice: null,
     selectedAvatar: null,
@@ -78,20 +54,18 @@ export const NavigationProvider = ({ children }) => {
     }
   });
 
-  // Navigation function (wrapped in useCallback for stable reference)
+  // Navigation function
   const navigateToTab = useCallback((tabName) => {
-    console.log(`NavigationContext: Navigating to ${tabName}`);
-    
     // Validate tab name
-    if (!tabName || typeof tabName !== 'string') {
-      console.error('NavigationContext: Invalid tab name:', tabName);
+    if (!AVAILABLE_TABS.includes(tabName)) {
+      console.error(`Invalid tab name: ${tabName}`);
       return;
     }
-    
-    // Update the active tab
+
+    console.log(`NavigationContext: Navigating to ${tabName}`);
     setActiveTab(tabName);
-    
-    // Find the step index for this tab
+
+    // Update active step if it's a workflow step
     const stepIndex = WORKFLOW_STEPS.findIndex(step => step.tabName === tabName);
     if (stepIndex >= 0) {
       setWorkflowState(prev => ({
@@ -101,7 +75,7 @@ export const NavigationProvider = ({ children }) => {
     }
   }, []);
 
-  // Function to update workflow state
+  // Workflow state management
   const updateWorkflowState = useCallback((updates) => {
     setWorkflowState(prev => ({
       ...prev,
@@ -109,48 +83,44 @@ export const NavigationProvider = ({ children }) => {
     }));
   }, []);
 
-  // Function to mark a step as completed
+  // Step completion
   const completeStep = useCallback((stepId, data = {}) => {
     console.log(`NavigationContext: Completing step ${stepId}`, data);
     
-    setWorkflowState(prev => {
-      // Merge any data provided
-      const newState = {
-        ...prev,
-        ...data,
-        completedSteps: {
-          ...prev.completedSteps,
-          [stepId]: true
-        }
-      };
-      
-      return newState;
-    });
+    setWorkflowState(prev => ({
+      ...prev,
+      ...data,
+      completedSteps: {
+        ...prev.completedSteps,
+        [stepId]: true
+      }
+    }));
   }, []);
 
-  // Function to handle next step in the workflow
+  // Navigation helpers
   const goToNextStep = useCallback(() => {
-    const currentStep = workflowState.activeStep;
-    const nextStep = currentStep + 1;
-    
-    if (nextStep < WORKFLOW_STEPS.length) {
-      const nextTabName = WORKFLOW_STEPS[nextStep].tabName;
-      navigateToTab(nextTabName);
+    const currentIndex = WORKFLOW_STEPS.findIndex(step => step.tabName === activeTab);
+    if (currentIndex >= 0 && currentIndex < WORKFLOW_STEPS.length - 1) {
+      // Check if current step is completed before allowing navigation
+      const currentStep = WORKFLOW_STEPS[currentIndex];
+      if (workflowState.completedSteps[currentStep.id]) {
+        const nextStep = WORKFLOW_STEPS[currentIndex + 1];
+        navigateToTab(nextStep.tabName);
+      } else {
+        console.log(`Cannot proceed: ${currentStep.id} step is not completed`);
+      }
     }
-  }, [workflowState.activeStep, navigateToTab]);
+  }, [activeTab, workflowState.completedSteps, navigateToTab]);
 
-  // Function to handle previous step in the workflow
   const goToPreviousStep = useCallback(() => {
-    const currentStep = workflowState.activeStep;
-    const prevStep = currentStep - 1;
-    
-    if (prevStep >= 0) {
-      const prevTabName = WORKFLOW_STEPS[prevStep].tabName;
-      navigateToTab(prevTabName);
+    const currentIndex = WORKFLOW_STEPS.findIndex(step => step.tabName === activeTab);
+    if (currentIndex > 0) {
+      const prevStep = WORKFLOW_STEPS[currentIndex - 1];
+      navigateToTab(prevStep.tabName);
     }
-  }, [workflowState.activeStep, navigateToTab]);
+  }, [activeTab, navigateToTab]);
 
-  // Get the current steps with completion status
+  // Get steps with current status
   const getStepsWithStatus = useCallback(() => {
     return WORKFLOW_STEPS.map(step => ({
       ...step,
@@ -158,56 +128,61 @@ export const NavigationProvider = ({ children }) => {
     }));
   }, [workflowState.completedSteps]);
 
-  // Helper function for selecting a voice
+  // Selection handlers
   const selectVoice = useCallback((voice) => {
-    completeStep('voices', { selectedVoice: voice });
-  }, [completeStep]);
-  
-  // Helper function for selecting an avatar
-  const selectAvatar = useCallback((avatar) => {
-    completeStep('avatars', { selectedAvatar: avatar });
-  }, [completeStep]);
-  
-  // Helper function for updating the script
-  const updateScript = useCallback((content) => {
-    const isCompleted = content && content.trim().length > 10; // Minimum script length
-    if (isCompleted) {
-      completeStep('script', { scriptContent: content });
+    if (voice) {
+      completeStep('voices', { selectedVoice: voice });
+      // No automatic navigation after selection
     } else {
-      updateWorkflowState({ scriptContent: content });
+      updateWorkflowState({ 
+        selectedVoice: null,
+        completedSteps: {
+          ...workflowState.completedSteps,
+          voices: false
+        }
+      });
+    }
+  }, [completeStep, updateWorkflowState, workflowState.completedSteps]);
+
+  const selectAvatar = useCallback((avatar) => {
+    if (avatar) {
+      completeStep('avatars', { selectedAvatar: avatar });
+      // No automatic navigation after selection
+    } else {
+      updateWorkflowState({ 
+        selectedAvatar: null,
+        completedSteps: {
+          ...workflowState.completedSteps,
+          avatars: false
+        }
+      });
+    }
+  }, [completeStep, updateWorkflowState, workflowState.completedSteps]);
+
+  const updateScript = useCallback((content) => {
+    const isCompleted = content && content.trim().length > 10;
+    updateWorkflowState({ scriptContent: content });
+    
+    if (isCompleted) {
+      completeStep('script');
+      // No automatic navigation after completion
     }
   }, [completeStep, updateWorkflowState]);
 
-  // Provide all values and functions to components
+  // Context value
   const contextValue = {
-    // Current state
     activeTab,
     workflowState,
     steps: getStepsWithStatus(),
-    
-    // Navigation functions
     navigateToTab,
     goToNextStep,
     goToPreviousStep,
-    
-    // State update functions
     updateWorkflowState,
     completeStep,
-    
-    // Voice-specific handlers
     selectVoice,
-    
-    // Avatar-specific handlers
     selectAvatar,
-    
-    // Script-specific handlers
     updateScript
   };
-
-  console.log('NavigationProvider rendering with context:', {
-    activeTab, 
-    stepsCount: getStepsWithStatus().length
-  });
 
   return (
     <NavigationContext.Provider value={contextValue}>
@@ -216,19 +191,15 @@ export const NavigationProvider = ({ children }) => {
   );
 };
 
-/**
- * Custom hook to use the navigation context
- */
+// Custom hook for using navigation
 export const useNavigation = () => {
   const context = useContext(NavigationContext);
   
   if (!context) {
-    console.error('useNavigation called outside of NavigationProvider!');
     throw new Error('useNavigation must be used within a NavigationProvider');
   }
   
   return context;
 };
 
-// Export the context directly in case someone needs direct access
-export default NavigationContext; 
+export default NavigationContext;

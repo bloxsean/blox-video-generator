@@ -1,156 +1,126 @@
 import React from 'react';
 import './Home.css';
 import { useNavigation } from '../contexts/NavigationContext';
+import { FiVideo, FiMic, FiUser, FiCpu, FiGlobe, FiDownload } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 
-// Content component that uses navigation after it's available
-const HomeContent = ({ navigateToTab }) => {
+const Home = () => {
+  const { navigateToTab } = useNavigation();
+
+  const features = [
+    {
+      icon: <FiMic />,
+      title: "AI-Powered Voices",
+      description: "Choose from a diverse library of natural-sounding voices in multiple languages and accents."
+    },
+    {
+      icon: <FiUser />,
+      title: "Realistic Avatars",
+      description: "Select from our collection of lifelike digital avatars with natural expressions and movements."
+    },
+    {
+      icon: <FiCpu />,
+      title: "Smart Generation",
+      description: "Advanced AI technology creates high-quality videos in minutes, not hours."
+    },
+    {
+      icon: <FiVideo />,
+      title: "Professional Quality",
+      description: "Generate studio-quality videos perfect for marketing, training, and education."
+    },
+    {
+      icon: <FiGlobe />,
+      title: "Multiple Languages",
+      description: "Create content in various languages to reach a global audience."
+    },
+    {
+      icon: <FiDownload />,
+      title: "Easy Export",
+      description: "Download your videos in standard formats or share directly to platforms."
+    }
+  ];
+
+  const workflowSteps = [
+    {
+      number: "1",
+      title: "Select Your Voice",
+      description: "Choose from our library of natural-sounding AI voices in multiple languages."
+    },
+    {
+      number: "2",
+      title: "Pick an Avatar",
+      description: "Select a realistic digital avatar that matches your brand and message."
+    },
+    {
+      number: "3",
+      title: "Write Your Script",
+      description: "Enter your text or use our templates to create engaging content."
+    },
+    {
+      number: "4",
+      title: "Generate Video",
+      description: "Let our AI create a professional video in minutes."
+    }
+  ];
+
   return (
-    <div className="home-container">
-      <div className="welcome-section">
-        <h2>Create AI-Generated Videos with Avatars and Custom Voices</h2>
-        <p>
-          Welcome to our AI Video Generator! This application allows you to create
-          professional-looking videos featuring realistic AI avatars speaking with
-          natural-sounding voices.
+    <div className="home">
+      <section className="hero-section">
+        <div className="hero-gradient" />
+        <h1 className="hero-title">
+          Create Professional Videos with AI
+        </h1>
+        <p className="hero-subtitle">
+          Transform your content into engaging videos using AI-powered voices and realistic avatars. Perfect for marketing, training, education, and more.
         </p>
-        
-        <div className="get-started-btn-container">
-          <button 
-            className="get-started-btn"
-            onClick={() => navigateToTab('voices')}
-          >
-            Get Started
-          </button>
-        </div>
-      </div>
-      
-      <div className="workflow-overview">
-        <h3>How It Works</h3>
-        <div className="workflow-steps">
-          <div className="workflow-step">
-            <div className="step-number">1</div>
-            <h4>Select a Voice</h4>
-            <p>Choose from our library of natural-sounding AI voices.</p>
-            <button 
-              className="step-action-btn"
-              onClick={() => navigateToTab('voices')}
-            >
-              Choose Voice
-            </button>
-          </div>
-          
-          <div className="workflow-step">
-            <div className="step-number">2</div>
-            <h4>Pick an Avatar</h4>
-            <p>Select a realistic avatar that will speak your script.</p>
-            <button 
-              className="step-action-btn"
-              onClick={() => navigateToTab('avatars')}
-            >
-              Browse Avatars
-            </button>
-          </div>
-          
-          <div className="workflow-step">
-            <div className="step-number">3</div>
-            <h4>Write Your Script</h4>
-            <p>Enter the text you want your avatar to speak in the video.</p>
-            <button 
-              className="step-action-btn"
-              onClick={() => navigateToTab('script')}
-            >
-              Create Script
-            </button>
-          </div>
-          
-          <div className="workflow-step">
-            <div className="step-number">4</div>
-            <h4>Generate Your Video</h4>
-            <p>Review your selections and generate the final video.</p>
-            <button 
-              className="step-action-btn"
-              onClick={() => navigateToTab('videos')}
-            >
-              Generate Video
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <div className="features-section">
-        <h3>Key Features</h3>
+        <button 
+          className="cta-button"
+          onClick={() => navigateToTab('voices')}
+        >
+          Get Started
+          <span>→</span>
+        </button>
+      </section>
+
+      <section className="features-section">
+        <h2 className="section-title">Powerful Features</h2>
         <div className="features-grid">
-          <div className="feature-card">
-            <h4>Realistic AI Voices</h4>
-            <p>Choose from a wide range of natural-sounding voices in multiple languages and accents.</p>
-          </div>
-          
-          <div className="feature-card">
-            <h4>Lifelike Avatars</h4>
-            <p>Select from our library of realistic digital avatars with natural expressions and movements.</p>
-          </div>
-          
-          <div className="feature-card">
-            <h4>Custom Scripts</h4>
-            <p>Write your own script or use our templates to create engaging content for your videos.</p>
-          </div>
-          
-          <div className="feature-card">
-            <h4>Fast Generation</h4>
-            <p>Our advanced AI generates high-quality videos in minutes, not hours.</p>
-          </div>
-          
-          <div className="feature-card">
-            <h4>Multiple Use Cases</h4>
-            <p>Perfect for marketing, training, education, customer support, and more.</p>
-          </div>
-          
-          <div className="feature-card">
-            <h4>Easy Sharing</h4>
-            <p>Download your videos in standard formats or share directly to social platforms.</p>
-          </div>
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              className="feature-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <div className="feature-icon">{feature.icon}</div>
+              <h3 className="feature-title">{feature.title}</h3>
+              <p className="feature-description">{feature.description}</p>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      </section>
+
+      <section className="workflow-section">
+        <h2 className="section-title">How It Works</h2>
+        <div className="workflow-steps">
+          {workflowSteps.map((step, index) => (
+            <motion.div
+              key={step.title}
+              className="workflow-step"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.2 }}
+            >
+              <div className="step-number">{step.number}</div>
+              <h3 className="step-title">{step.title}</h3>
+              <p className="step-description">{step.description}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };
 
-// Error fallback component
-const HomeError = ({ error }) => (
-  <div className="home-container" style={{ padding: '20px' }}>
-    <div style={{ 
-      padding: '20px', 
-      border: '2px solid red', 
-      borderRadius: '5px', 
-      marginBottom: '20px' 
-    }}>
-      <h2>Navigation Context Error in Home Component</h2>
-      <p>Error: {error.message}</p>
-      <p>This component could not access the NavigationContext.</p>
-      <ul>
-        <li>The NavigationProvider is correctly set up in main.jsx</li>
-        <li>There may be a circular dependency causing this issue</li>
-        <li>The context hook may be called before the provider is ready</li>
-      </ul>
-    </div>
-  </div>
-);
-
-// Main Home component with safe context access
-const Home = () => {
-  console.log('Home component rendering');
-  
-  try {
-    // Safely try to access the navigation context
-    const navigation = useNavigation();
-    console.log('Home: Successfully connected to NavigationContext');
-    
-    // Pass only what's needed to the content component
-    return <HomeContent navigateToTab={navigation.navigateToTab} />;
-  } catch (error) {
-    console.error('Home: Error accessing NavigationContext:', error);
-    return <HomeError error={error} />;
-  }
-};
-
-export default Home; 
+export default Home;

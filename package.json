@@ -6,34 +6,41 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev:server": "nodemon server.js",
+    "dev:server": "nodemon --config nodemon.json server.js",
     "dev:client": "vite",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev": "concurrently --kill-others-on-fail \"npm run dev:server\" \"npm run dev:client\"",
     "build": "vite build",
     "serve": "npm run build && npm start",
     "server": "node server.js"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^6.4.7",
-    "@mui/material": "^6.4.7",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.14.18",
+    "@mui/material": "^5.14.18",
     "axios": "^1.6.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "framer-motion": "^10.16.5",
     "http-proxy-middleware": "^2.0.6",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.12.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.0.14",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.2.0",
-    "autoprefixer": "^10.4.21",
+    "autoprefixer": "^10.4.16",
     "concurrently": "^8.2.2",
     "nodemon": "^3.0.1",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.0.14",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5",
+    "typescript": "^5.2.2",
     "vite": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

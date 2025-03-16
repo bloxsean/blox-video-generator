@@ -1,7 +1,20 @@
+.loading-message {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  font-size: 1.125rem;
+  color: #94a3b8;
+  text-align: center;
+  padding: 2rem;
+}
+
 .voice-browser {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2rem;
 }
 
 .voice-browser-header {
@@ -10,7 +23,7 @@
 
 .voice-browser-header h2 {
   margin-bottom: 1.5rem;
-  color: #1f2937;
+  color: #f8fafc;
   font-size: 1.5rem;
   font-weight: 600;
 }
@@ -20,7 +33,10 @@
   align-items: center;
   gap: 1rem;
   margin: 1rem 0;
-  background-color: #f0f9ff;
+  background-color: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(56, 189, 248, 0.1);
 }
 
 .voice-search {
@@ -31,20 +47,33 @@
 .voice-search input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  background-color: rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  border-radius: 0.5rem;
+  color: #f8fafc;
   font-size: 0.875rem;
+}
+
+.voice-search input::placeholder {
+  color: #94a3b8;
+}
+
+.voice-search input:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 
 .current-selection {
   margin-top: 1rem;
   padding: 0.75rem;
-  background-color: #f0f9ff;
-  border-radius: 6px;
-  border-left: 3px solid #3b82f6;
+  background-color: rgba(56, 189, 248, 0.1);
+  border-radius: 0.5rem;
+  border-left: 3px solid #38bdf8;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: #f8fafc;
 }
 
 .clear-selection {
@@ -55,11 +84,12 @@
   font-size: 0.75rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
 }
 
 .clear-selection:hover {
-  background-color: #fee2e2;
+  background-color: rgba(239, 68, 68, 0.1);
 }
 
 .voice-content {
@@ -73,11 +103,11 @@
 }
 
 .voice-card {
-  background: white;
-  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  border-radius: 0.75rem;
   overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -87,11 +117,13 @@
 
 .voice-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
 }
 
 .voice-card.selected {
-  border: 2px solid #3b82f6;
+  border: 2px solid #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
 }
 
 .voice-card.selected::before {
@@ -101,14 +133,14 @@
   right: -8px;
   width: 24px;
   height: 24px;
-  background-color: #3b82f6;
-  color: white;
+  background-color: #38bdf8;
+  color: #0f172a;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  border: 2px solid white;
+  border: 2px solid #0f172a;
   z-index: 1;
 }
 
@@ -121,7 +153,7 @@
   margin: 0 0 0.75rem 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #f8fafc;
 }
 
 .voice-details {
@@ -133,7 +165,7 @@
 .voice-language,
 .voice-gender {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #94a3b8;
 }
 
 .voice-status {
@@ -148,13 +180,13 @@
 }
 
 .status-badge.premium {
-  background-color: #fef3c7;
-  color: #b45309;
+  background-color: rgba(234, 179, 8, 0.2);
+  color: #fbbf24;
 }
 
 .status-badge.free {
-  background-color: #dcfce7;
-  color: #15803d;
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
 }
 
 .voice-tags {
@@ -165,8 +197,8 @@
 }
 
 .tag-badge {
-  background-color: #f3f4f6;
-  color: #4b5563;
+  background-color: rgba(30, 41, 59, 0.5);
+  color: #94a3b8;
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
   font-size: 0.75rem;
@@ -181,43 +213,50 @@
 
 .play-sample-btn {
   padding: 0.75rem;
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border: none;
-  border-radius: 6px;
+  background-color: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
 }
 
-.play-sample-btn::before {
-  content: '▶';
-  font-size: 0.75rem;
+.play-sample-btn:hover {
+  background-color: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.3);
 }
 
-.play-sample-btn:hover {
-  background-color: #e5e7eb;
+.play-sample-btn.playing {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.play-sample-btn.playing:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .select-voice-btn {
   padding: 0.75rem;
-  background-color: #3b82f6;
-  color: white;
+  background-color: #38bdf8;
+  color: #0f172a;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .select-voice-btn:hover {
-  background-color: #2563eb;
+  background-color: #0284c7;
 }
 
 .select-voice-btn.selected {
@@ -230,15 +269,15 @@
   align-items: center;
   min-height: 300px;
   font-size: 1.125rem;
-  color: #6b7280;
+  color: #94a3b8;
   text-align: center;
   padding: 2rem;
 }
 
 .error-message {
   color: #ef4444;
-  background-color: #fee2e2;
-  border-radius: 8px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-radius: 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -257,13 +296,13 @@
 
 .retry-button, .force-refresh-button {
   background-color: #ef4444;
-  color: white;
+  color: #f8fafc;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5rem;
   padding: 0.75rem 1.5rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .retry-button:hover, .force-refresh-button:hover {
@@ -279,24 +318,97 @@
 }
 
 .refresh-button {
-  background-color: #3b82f6;
-  color: white;
+  background-color: #38bdf8;
+  color: #0f172a;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5rem;
   padding: 0.75rem 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .refresh-button:hover {
-  background-color: #2563eb;
+  background-color: #0284c7;
 }
 
 .no-results {
-  background-color: #f9fafb;
-  border-radius: 8px;
-  border: 1px dashed #d1d5db;
+  background-color: rgba(30, 41, 59, 0.5);
+  border-radius: 0.75rem;
+  border: 1px dashed rgba(56, 189, 248, 0.1);
+}
+
+/* Audio player modal styles */
+.audio-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  backdrop-filter: blur(4px);
+}
+
+.audio-player {
+  background-color: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+}
+
+.audio-player-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.audio-player-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-button:hover {
+  color: #f8fafc;
+  background-color: rgba(56, 189, 248, 0.1);
+}
+
+.audio-player audio {
+  width: 100%;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+  background-color: rgba(15, 23, 42, 0.5);
+}
+
+.audio-player audio::-webkit-media-controls-panel {
+  background-color: rgba(15, 23, 42, 0.5);
+}
+
+.audio-player audio::-webkit-media-controls-current-time-display,
+.audio-player audio::-webkit-media-controls-time-remaining-display {
+  color: #f8fafc;
 }
 
 @media (max-width: 768px) {
@@ -312,4 +424,9 @@
   .voice-actions {
     gap: 0.5rem;
   }
-} 
+  
+  .audio-player {
+    width: 95%;
+    padding: 1.5rem;
+  }
+}

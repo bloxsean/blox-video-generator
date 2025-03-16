@@ -1,0 +1,26 @@
+{
+  "restartable": "rs",
+  "ignore": [
+    ".git",
+    "node_modules/**/node_modules",
+    "dist",
+    "src/client",
+    "*.test.js"
+  ],
+  "verbose": true,
+  "execMap": {
+    "js": "node"
+  },
+  "watch": [
+    "server.js",
+    "src/server/"
+  ],
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "ext": "js,json",
+  "delay": "1000",
+  "events": {
+    "restart": "echo \"App restarted due to changes\""
+  }
+}

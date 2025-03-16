@@ -12,12 +12,10 @@ const VideoList = () => {
   const [playingVideo, setPlayingVideo] = useState(null);
   const videoRefs = useRef({});
   
-  // Format date to a more readable format
   const formatDate = (dateString) => {
-    // Handle Unix timestamp or ISO string
     const date = typeof dateString === 'number' 
-      ? new Date(dateString * 1000) // Unix timestamp (seconds since epoch)
-      : new Date(dateString);       // ISO string
+      ? new Date(dateString * 1000)
+      : new Date(dateString);
     
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
@@ -28,7 +26,6 @@ const VideoList = () => {
     }).format(date);
   };
   
-  // Get status badge class based on status
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'completed':
@@ -43,14 +40,11 @@ const VideoList = () => {
     }
   };
   
-  // Load initial videos
   useEffect(() => {
     fetchVideos();
   }, []);
 
-  // Handle playing videos
   useEffect(() => {
-    // Pause all videos except the currently playing one
     Object.entries(videoRefs.current).forEach(([videoId, videoElement]) => {
       if (videoId !== playingVideo && videoElement) {
         videoElement.pause();
@@ -58,18 +52,15 @@ const VideoList = () => {
     });
   }, [playingVideo]);
   
-  // Toggle video playback
   const toggleVideoPlayback = (videoId) => {
     const videoElement = videoRefs.current[videoId];
     
     if (!videoElement) return;
     
     if (playingVideo === videoId) {
-      // This video is already playing, pause it
       videoElement.pause();
       setPlayingVideo(null);
     } else {
-      // Play this video and pause others
       if (playingVideo) {
         const currentlyPlaying = videoRefs.current[playingVideo];
         if (currentlyPlaying) {
@@ -84,7 +75,6 @@ const VideoList = () => {
     }
   };
   
-  // Fetch videos using the new enriched service
   const fetchVideos = async (token = null) => {
     try {
       if (token) {
@@ -96,7 +86,6 @@ const VideoList = () => {
       setError(null);
       console.log(`VideoList: Fetching videos with token: ${token || 'NONE'}`);
       
-      // Get fully enriched videos with all details
       const response = await getEnrichedVideoList(token);
       
       console.log('VideoList: Received enriched videos response:', {
@@ -108,39 +97,22 @@ const VideoList = () => {
         const videosData = response.videos;
         console.log(`VideoList: Processing ${videosData.length} enriched videos`);
         
-        // Log the first video for debugging
-        if (videosData.length > 0) {
-          const firstVideo = videosData[0];
-          console.log('VideoList: First enriched video:', firstVideo);
-          console.log('VideoList: Media URLs:', {
-            thumbnail_url: firstVideo.thumbnail_url || 'NONE',
-            proxied_video_url: firstVideo.proxied_video_url || 'NONE',
-            enriched: firstVideo._enriched || false
-          });
-        }
-        
-        // Prepare videos for display with consistent field access
         const displayVideos = videosData.map(video => ({
           ...video,
-          // Ensure these fields are consistently named
           video_id: video.video_id,
           title: video.video_title || video.title || `Video ${video.video_id.substring(0, 8)}`,
           status: video.status || 'unknown',
           created_at: video.created_at || video.creation_time || new Date().toISOString(),
-          // Flag for UI rendering
           _hasValidThumbnail: !!video.thumbnail_url,
           _hasValidVideoUrl: !!video.proxied_video_url,
         }));
         
         if (token) {
-          // Append to existing videos
           setVideos(prevVideos => [...prevVideos, ...displayVideos]);
         } else {
-          // Replace existing videos
           setVideos(displayVideos);
         }
         
-        // Store pagination token for next page if available
         setNextPageToken(response.token || null);
       } else {
         throw new Error('Invalid response format from enriched video service');
@@ -154,19 +126,16 @@ const VideoList = () => {
     }
   };
   
-  // Load more videos
   const handleLoadMore = () => {
     if (nextPageToken) {
       fetchVideos(nextPageToken);
     }
   };
   
-  // Handle video deletion (using the new service)
   const handleDeleteVideo = async (videoId) => {
     if (window.confirm('Are you sure you want to delete this video?')) {
       try {
         await deleteVideo(videoId);
-        // Remove the deleted video from the list
         setVideos(prevVideos => prevVideos.filter(video => video.video_id !== videoId));
       } catch (err) {
         setError(`Failed to delete video: ${err.message}`);
@@ -174,7 +143,6 @@ const VideoList = () => {
     }
   };
   
-  // Get status display with appropriate icon
   const getStatusDisplay = (status) => {
     switch (status) {
       case 'completed':
@@ -190,7 +158,6 @@ const VideoList = () => {
     }
   };
   
-  // Get video preview component based on video status and available thumbnails
   const getVideoPreview = (video) => {
     console.log(`VideoList: Preview for video ${video.video_id}:`, {
       status: video.status,
@@ -200,22 +167,20 @@ const VideoList = () => {
     });
     
     if (video.status === 'completed') {
-      // Use VideoPlayer component for completed videos
       return (
         <VideoPlayer
+          key={`player-${video.video_id}`}
           videoUrl={video.proxied_video_url || null}
           thumbnailUrl={video.thumbnail_url || '/placeholder-thumbnail.svg'}
           title={video.title}
           onPlay={() => setPlayingVideo(video.video_id)}
           onPause={() => setPlayingVideo(null)}
           onError={(err) => console.error('Video playback error:', err)}
-          // Pass the raw video object for debugging
           rawVideo={video}
         />
       );
     }
     
-    // For other statuses (processing, pending, etc.)
     return (
       <div className="video-status-preview">
         {video.status === 'processing' ? (
@@ -241,7 +206,6 @@ const VideoList = () => {
     );
   };
   
-  // Get appropriate action buttons based on video status
   const getActionButtons = (video) => {
     if (video.status === 'completed') {
       return (
@@ -260,7 +224,6 @@ const VideoList = () => {
               href={video.proxied_video_url}
               download={`video-${video.video_id}.mp4`}
               onClick={(e) => {
-                // If the proxied URL doesn't support download, try the original
                 if (!video.proxied_video_url.includes('download=true') && video.download_url) {
                   e.preventDefault();
                   const a = document.createElement('a');
@@ -307,19 +270,17 @@ const VideoList = () => {
     }
   };
   
-  // Generate a color based on video ID for the card background
   const getCardColor = (videoId) => {
     const colors = [
-      '#fef3c7', // amber-100
-      '#dbeafe', // blue-100
-      '#e0e7ff', // indigo-100
-      '#f3e8ff', // purple-100
-      '#fcecf4', // pink-100
-      '#dcfce7', // green-100
-      '#f1f5f9', // slate-100
+      '#fef3c7',
+      '#dbeafe',
+      '#e0e7ff',
+      '#f3e8ff',
+      '#fcecf4',
+      '#dcfce7',
+      '#f1f5f9',
     ];
     
-    // Use the last character of the video ID to select a color
     const lastChar = videoId.charCodeAt(videoId.length - 1) || 0;
     return colors[lastChar % colors.length];
   };
@@ -348,93 +309,14 @@ const VideoList = () => {
         </div>
       ) : (
         <>
-          {/* Add enhanced debugging information at the top */}
-          {/* {process.env.NODE_ENV !== 'production' && (
-            <div className="debug-info" style={{ margin: '10px 0', padding: '10px', background: '#f0f0f0', border: '1px solid #ddd', borderRadius: '4px' }}>
-              <details>
-                <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Debug Info (Click to expand)</summary>
-                <div style={{ marginTop: '10px', fontSize: '12px', fontFamily: 'monospace' }}>
-                  {videos.length > 0 ? (
-                    <>
-                      <h4 style={{ marginBottom: '8px' }}>Video Data Being Used For Rendering:</h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div>
-                          <strong>Title:</strong> {videos[0].title} 
-                          <span style={{ color: '#666', marginLeft: '4px' }}>
-                            (Using: {videos[0].title === videos[0].video_title ? 'video_title' : 'title'} field)
-                          </span>
-                        </div>
-                        
-                        <div>
-                          <strong>Video ID:</strong> {videos[0].video_id}
-                        </div>
-                        
-                        <div>
-                          <strong>Enriched:</strong> 
-                          <span style={{ 
-                            color: videos[0]._enriched ? '#065f46' : '#b91c1c',
-                            fontWeight: 'bold'
-                          }}>
-                            {videos[0]._enriched ? 'YES' : 'NO'}
-                          </span>
-                        </div>
-                        
-                        <div>
-                          <strong>Thumbnail URL:</strong> 
-                          <span style={{ 
-                            color: videos[0]._hasValidThumbnail ? '#065f46' : '#b91c1c',
-                            fontWeight: videos[0]._hasValidThumbnail ? 'normal' : 'bold'
-                          }}>
-                            {videos[0]._hasValidThumbnail ? (videos[0].thumbnail_url || '').substring(0, 50) + '...' : 'MISSING'}
-                          </span>
-                        </div>
-                        
-                        <div>
-                          <strong>Video URL:</strong> 
-                          <span style={{ 
-                            color: videos[0]._hasValidVideoUrl ? '#065f46' : '#b91c1c',
-                            fontWeight: videos[0]._hasValidVideoUrl ? 'normal' : 'bold'
-                          }}>
-                            {videos[0]._hasValidVideoUrl ? (videos[0].proxied_video_url || '').substring(0, 50) + '...' : 'MISSING'}
-                          </span>
-                        </div>
-                        
-                        <div>
-                          <strong>Status:</strong> {videos[0].status}
-                        </div>
-                      </div>
-                      
-                      <h4 style={{ margin: '16px 0 8px 0' }}>Raw Data:</h4>
-                      <pre style={{ overflow: 'auto', maxHeight: '200px', background: '#2d2d2d', color: '#f8f8f2', padding: '8px', borderRadius: '4px' }}>
-                        {JSON.stringify(videos[0], null, 2)}
-                      </pre>
-                    </>
-                  ) : (
-                    <p>No videos available to debug</p>
-                  )}
-                </div>
-              </details>
-            </div>
-          )} */}
-          
           <div className="video-list">
-            {videos.map(video => {
-              // Log the first video render
-              if (video === videos[0]) {
-                console.log('VideoList: Rendering first video:', {
-                  'title': video.title,
-                  'video_id': video.video_id,
-                  'thumbnail_url': video.thumbnail_url || 'NONE',
-                  'proxied_video_url': video.proxied_video_url || 'NONE',
-                  'status': video.status,
-                  '_enriched': video._enriched || false
-                });
-              }
+            {videos.map((video) => {
+              const videoKey = video.video_id || `video-${Math.random().toString(36).substr(2, 9)}`;
               
               return (
                 <div 
+                  key={videoKey}
                   className="video-item" 
-                  key={video.video_id}
                   style={{ 
                     background: video._hasValidThumbnail ? 'white' : `linear-gradient(to bottom right, white, ${getCardColor(video.video_id)})` 
                   }}
@@ -487,4 +369,4 @@ const VideoList = () => {
   );
 };
 
-export default VideoList; 
+export default VideoList;
