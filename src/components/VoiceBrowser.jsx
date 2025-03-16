@@ -419,7 +419,7 @@ const VoiceBrowser = () => {
           </button>
         </div>
         
-        {selectedVoice && (
+        {/* {selectedVoice && (
           <div className="current-selection">
             <span>Currently Selected: </span>
             <strong>{selectedVoice.voice_name || selectedVoice.name}</strong>
@@ -433,7 +433,7 @@ const VoiceBrowser = () => {
               Clear
             </button>
           </div>
-        )}
+        )} */}
       </div>
       
       <div className="voice-content">

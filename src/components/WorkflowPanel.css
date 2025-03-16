@@ -103,7 +103,7 @@
   border-left: 3px solid #9ca3af;
 }
 
-.step-number {
+/* .step-number {
   width: 28px;
   height: 28px;
   display: flex;
@@ -115,7 +115,7 @@
   font-weight: 600;
   font-size: 0.875rem;
   flex-shrink: 0;
-}
+} */
 
 .workflow-step.completed .step-number {
   background-color: #10b981;

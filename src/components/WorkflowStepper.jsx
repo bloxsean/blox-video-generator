@@ -1,6 +1,8 @@
 import React from 'react';
 import './WorkflowStepper.css';
 import { FiArrowLeft, FiArrowRight } from 'react-icons/fi';
+import { Alert } from '@mui/material';
+
 
 const WorkflowStepper = ({ 
   steps,
@@ -26,6 +28,7 @@ const WorkflowStepper = ({
     const step = steps[activeStep];
     if (!step) return '';
 
+    
     if (step.completed) {
       return `${step.label} completed! ${activeStep < steps.length - 1 ? 'Click Next to continue' : 'Review and complete'}`;
     } else {
@@ -71,6 +74,20 @@ const WorkflowStepper = ({
           <FiArrowLeft />
           Back
         </button>
+        <div className="test-message">
+          <Alert variant="outlined" severity="info" 
+            sx={{  
+              '& .MuiSvgIcon-root': {
+                fontSize: '24px'  // Adjust the icon size
+              },
+              // You can also adjust the message font size at the same time
+              '& .MuiAlert-message': {
+                fontSize: '16px'
+              },
+              marginBottom: 2  }}>
+            {getGuidanceMessage()}
+          </Alert>
+        </div>
 
         <button
           className="nav-button next-button"
@@ -83,9 +100,9 @@ const WorkflowStepper = ({
       </div>
 
       {/* Guidance message */}
-      <div className="guidance-message">
+      {/* <div className="guidance-message">
         {getGuidanceMessage()}
-      </div>
+      </div> */}
     </div>
   );
 };

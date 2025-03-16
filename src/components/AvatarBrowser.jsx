@@ -420,7 +420,7 @@ const AvatarBrowser = () => {
           </div>
         </div>
         
-        {selectedAvatar && (
+        {/* {selectedAvatar && (
           <div className="current-selection">
             <span>Currently Selected: </span>
             <strong>{selectedAvatar.avatar_name}</strong>
@@ -434,7 +434,7 @@ const AvatarBrowser = () => {
               Clear
             </button>
           </div>
-        )}
+        )} */}
       </div>
       
       <div className="avatar-content">

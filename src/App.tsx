@@ -34,7 +34,8 @@ function App() {
               onClick={() => handleNavigation('home')}
               style={{ cursor: 'pointer' }}
             >
-              <svg viewBox="0 0 24 24">
+              <img src="/blox-logo.png" alt="Logo" className="logo-image" />
+              {/* <svg viewBox="0 0 24 24">
                 <defs>
                   <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#38bdf8" />
@@ -42,8 +43,8 @@ function App() {
                   </linearGradient>
                 </defs>
                 <path d="M13 2.5V6h1.5v2h-7V6H9V2.5L12 1l1 1.5zM12 7.5c.69 0 1.25.56 1.25 1.25S12.69 10 12 10s-1.25-.56-1.25-1.25S11.31 7.5 12 7.5zM11 11h2v9h-2v-9z" />
-              </svg>
-              HeyGen
+              </svg> */}
+            
             </div>
           </div>
 

@@ -148,8 +148,8 @@
   left: -1rem;
   width: 2.5rem;
   height: 2.5rem;
-  background: linear-gradient(to right, #38bdf8, #818cf8);
-  border-radius: 50%;
+  /* background: linear-gradient(to right, #38bdf8, #818cf8); */
+  /* border-radius: 50%; */
   display: flex;
   align-items: center;
   justify-content: center;

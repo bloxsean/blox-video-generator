@@ -6,7 +6,7 @@ import VoiceCustomizer from './VoiceCustomizer';
 import VideoDimensionSelector from './VideoDimensionSelector';
 import WorkflowStepper from './WorkflowStepper';
 import { generateVideo, checkVideoStatus, getVideoDetails } from '../services/videoGenerationService';
-import { Box, Stepper, Step, StepLabel, Button, Typography } from '@mui/material';
+import { Box, Stepper, Step, StepLabel, Button, Typography, Avatar } from '@mui/material';
 import { useNavigation } from '../contexts/NavigationContext';
 
 // Get the API key from wherever it's working successfully in your application
@@ -158,69 +158,97 @@ const ScriptEditor = () => {
             <div className="voice-avatar-preview">
               <div className="selected-item">
                 <label>Voice:</label>
-                <span>{selectedVoice?.name}</span>
+                <span className="selected-value">{selectedVoice?.name}</span>
               </div>
+              <Avatar
+                src={selectedAvatar.preview_image_url}
+                alt={selectedAvatar.avatar_name}
+                sx={{ width: 70, height: 70 }}
+              >
+                {!selectedAvatar.preview_image_url && selectedAvatar.avatar_name?.charAt(0)}
+              </Avatar>
               <div className="selected-item">
                 <label>Avatar:</label>
-                <span>{selectedAvatar?.name}</span>
+                <span className="selected-value">{selectedAvatar?.avatar_name}</span>
               </div>
             </div>
             
             <div className="script-stats">
               <div className="stat-item">
                 <label>Word Count:</label>
-                <span className={wordCount < 10 ? 'warning' : ''}>{wordCount}</span>
+                <span className={wordCount < 10 ? 'warning' : 'stat-value'}>{wordCount}</span>
                 {wordCount < 10 && <span className="min-requirement">(Min: 10)</span>}
               </div>
               <div className="stat-item">
                 <label>Est. Duration:</label>
-                <span>{estimatedDuration.toFixed(1)} min</span>
+                <span className="stat-value">{estimatedDuration.toFixed(1)} min</span>
               </div>
             </div>
           </div>
           
-          <div className="script-textarea-container">
-            <label htmlFor="script-textarea">Enter your script:</label>
-            <textarea
-              id="script-textarea"
-              className="script-textarea"
-              value={localScript}
-              onChange={handleScriptChange}
-              placeholder="Write your script here. This is what your avatar will say in the video."
-              rows={10}
-            />
-          </div>
-          
-          <div className="script-actions">
-            <button 
-              className="save-script-btn"
-              onClick={handleSaveScript}
-              disabled={isSaving}
-            >
-              {isSaving ? 'Saving...' : 'Save Script'}
-            </button>
+          <div className="two-column-layout">
+            <div className="script-column">
+              <div className="script-textarea-container">
+                <label htmlFor="script-textarea" className="textarea-label">Enter your script:</label>
+                <textarea
+                  id="script-textarea"
+                  className="script-textarea"
+                  value={localScript}
+                  onChange={handleScriptChange}
+                  placeholder="Write your script here. This is what your avatar will say in the video."
+                  rows={10}
+                />
+              </div>
+              
+              <div className="script-actions">
+                <button 
+                  className="save-script-btn"
+                  onClick={handleSaveScript}
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save Script'}
+                </button>
+                
+                <button 
+                  className="generate-video-btn"
+                  onClick={() => {
+                    handleSaveScript();
+                    navigateToTab('videos');
+                  }}
+                  disabled={!isScriptValid || isSaving}
+                >
+                  Continue to Video Generation
+                </button>
+              </div>
+            </div>
             
-            <button 
-              className="generate-video-btn"
-              onClick={() => {
-                handleSaveScript();
-                navigateToTab('videos');
-              }}
-              disabled={!isScriptValid || isSaving}
-            >
-              Continue to Video Generation
-            </button>
-          </div>
-          
-          <div className="script-tips">
-            <h4>Tips for a better script:</h4>
-            <ul>
-              <li>Keep sentences short and clear</li>
-              <li>Avoid complex terminology unless necessary</li>
-              <li>Write as you would speak naturally</li>
-              <li>Add pauses with commas and periods</li>
-              <li>Read your script aloud to test flow</li>
-            </ul>
+            <div className="tips-column">
+              <div className="script-tips-container">
+                <h4 className="tips-header">Tips for a better script:</h4>
+                <div className="tips-list">
+                  <div className="tip-item">
+                    <div className="tip-icon">📝</div>
+                    <p>Keep sentences short and clear</p>
+                  </div>
+                  <div className="tip-item">
+                    <div className="tip-icon">🔤</div>
+                    <p>Avoid complex terminology unless necessary</p>
+                  </div>
+                  <div className="tip-item">
+                    <div className="tip-icon">🗣️</div>
+                    <p>Write as you would speak naturally</p>
+                  </div>
+                  <div className="tip-item">
+                    <div className="tip-icon">⏸️</div>
+                    <p>Add pauses with commas and periods</p>
+                  </div>
+                  <div className="tip-item">
+                    <div className="tip-icon">🔊</div>
+                    <p>Read your script aloud to test flow</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
