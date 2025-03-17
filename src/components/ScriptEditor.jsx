@@ -121,6 +121,28 @@ const ScriptEditor = () => {
     console.log('Selected Avatar:', selectedAvatar);
   }, [selectedAvatar]);
 
+  // Helper function to format avatar name from ID if needed
+  const formatAvatarName = (avatarId) => {
+    // Remove any timestamp or suffix after the last underscore
+    const nameParts = avatarId.split('_');
+    
+    // If it's a format like "Abigail_expressive_2024112501"
+    if (nameParts.length > 1) {
+      // Check if the last part is numeric/timestamp
+      const lastPart = nameParts[nameParts.length - 1];
+      if (/^\d+$/.test(lastPart)) {
+        // Remove the timestamp part
+        nameParts.pop();
+      }
+      
+      // Join the remaining parts and replace underscores with spaces
+      return nameParts.join(' ').replace(/_/g, ' ');
+    }
+    
+    // If simple ID, just return it with underscores replaced by spaces
+    return avatarId.replace(/_/g, ' ');
+  };
+
   return (
     <div className="script-editor">
       <div className="script-editor-header">
@@ -218,7 +240,8 @@ const ScriptEditor = () => {
                     <div className="avatar-label">
                       <span className="info-label">Avatar:</span>
                       <span className="info-value">
-                        {selectedAvatar?.avatar_name || 'No avatar selected'}
+                        {selectedAvatar?.avatar_name || 
+                         (selectedAvatar?.avatar_id ? formatAvatarName(selectedAvatar.avatar_id) : 'No avatar selected')}
                       </span>
                     </div>
                   </div>
@@ -280,11 +303,11 @@ const ScriptEditor = () => {
                   className="generate-video-btn"
                   onClick={() => {
                     handleSaveScript();
-                    navigateToTab('videos');
+                    navigateToTab('summary');
                   }}
                   disabled={!isScriptValid || isSaving}
                 >
-                  Continue to Video Generation
+                  Continue to Summary
                 </button>
               </div>
             </div>

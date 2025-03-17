@@ -5,6 +5,7 @@ import VoiceBrowser from './components/VoiceBrowser';
 import AvatarBrowser from './components/AvatarBrowser';
 import ScriptEditor from './components/ScriptEditor';
 import VideoList from './components/VideoList';
+import VideoCreationSummary from './components/VideoCreationSummary';
 import { useNavigation } from './contexts/NavigationContext';
 import { FiVideo, FiMic, FiUser, FiEdit, FiHome } from 'react-icons/fi';
 
@@ -68,6 +69,7 @@ function App() {
         {activeTab === 'voices' && <VoiceBrowser />}
         {activeTab === 'avatars' && <AvatarBrowser />}
         {activeTab === 'script' && <ScriptEditor />}
+        {activeTab === 'summary' && <VideoCreationSummary />}
         {activeTab === 'videos' && <VideoList />}
       </main>
     </div>

@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 // Create the context
 const NavigationContext = createContext(null);
 
 // Define all available tabs
-const AVAILABLE_TABS = ['home', 'voices', 'avatars', 'script', 'videos'];
+const AVAILABLE_TABS = ['home', 'voices', 'avatars', 'script', 'summary', 'videos'];
 
 // Define the workflow steps
 const WORKFLOW_STEPS = [
@@ -30,6 +30,13 @@ const WORKFLOW_STEPS = [
     guidanceMessage: 'Write your script to continue'
   },
   {
+    id: 'summary',
+    label: 'Video Summary',
+    description: 'Review your video summary before generating the video.',
+    tabName: 'summary',
+    guidanceMessage: 'Review your summary and click Generate Video'
+  },
+  {
     id: 'videos',
     label: 'Generate Video',
     description: 'Review settings and generate your video.',
@@ -50,6 +57,7 @@ export const NavigationProvider = ({ children }) => {
       voices: false,
       avatars: false,
       script: false,
+      summary: false,
       videos: false
     }
   });
@@ -183,6 +191,13 @@ export const NavigationProvider = ({ children }) => {
     selectAvatar,
     updateScript
   };
+
+  useEffect(() => {
+    console.log('Nav buttons:', document.querySelectorAll('.nav-tab').length);
+    document.querySelectorAll('.nav-tab').forEach(btn => {
+      console.log(btn.id, btn.innerText, window.getComputedStyle(btn).display);
+    });
+  }, []);
 
   return (
     <NavigationContext.Provider value={contextValue}>

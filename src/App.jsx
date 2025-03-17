@@ -8,6 +8,7 @@ import ScriptEditor from './components/ScriptEditor';
 import VideoList from './components/VideoList';
 import TestNavigation from './components/TestNavigation';
 import { useNavigation } from './contexts/NavigationContext';
+import VideoCreationSummary from './components/VideoCreationSummary';
 
 // Simple VoiceDebug component
 const VoiceDebug = () => (
@@ -129,6 +130,13 @@ function App() {
             Script
           </button>
           <button 
+            id="nav-tab-summary"
+            className={`nav-tab ${activeTab === 'summary' ? 'active' : ''}`}
+            onClick={() => navigateToTab('summary')}
+          >
+            Summary
+          </button>
+          <button 
             id="nav-tab-videos"
             className={`nav-tab ${activeTab === 'videos' ? 'active' : ''}`}
             onClick={() => navigateToTab('videos')}
@@ -180,6 +188,10 @@ function App() {
         
         {activeTab === 'videos' && (
           <VideoList />
+        )}
+        
+        {activeTab === 'summary' && (
+          <VideoCreationSummary />
         )}
       </main>
     </div>

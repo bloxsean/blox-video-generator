@@ -45,6 +45,29 @@ const formatAvatarType = (type) => {
   }
 };
 
+const formatAvatarName = (avatarId) => {
+  if (!avatarId) return 'Unknown Avatar';
+  
+  // Remove any timestamp or suffix after the last underscore
+  const nameParts = avatarId.split('_');
+  
+  // If it's a format like "Abigail_expressive_2024112501"
+  if (nameParts.length > 1) {
+    // Check if the last part is numeric/timestamp
+    const lastPart = nameParts[nameParts.length - 1];
+    if (/^\d+$/.test(lastPart)) {
+      // Remove the timestamp part
+      nameParts.pop();
+    }
+    
+    // Join the remaining parts and replace underscores with spaces
+    return nameParts.join(' ').replace(/_/g, ' ');
+  }
+  
+  // If simple ID, just return it with underscores replaced by spaces
+  return avatarId.replace(/_/g, ' ');
+};
+
 const AvatarBrowser = () => {
   const {
     workflowState,
@@ -165,7 +188,13 @@ const AvatarBrowser = () => {
   }, []);
 
   const handleAvatarSelect = (avatar) => {
-    selectAvatar(avatar);
+    // Ensure avatar_name is included if it exists in the original data
+    const completeAvatar = {
+      ...avatar,
+      avatar_name: avatar.avatar_name || formatAvatarName(avatar.avatar_id)
+    };
+    
+    selectAvatar(completeAvatar);
   };
 
   const isSelected = (avatar) => {
@@ -348,7 +377,7 @@ const AvatarBrowser = () => {
             </div>
             
             <div className="avatar-details">
-              <h3>{avatar.avatar_name}</h3>
+              <h3>{avatar.avatar_name || formatAvatarName(avatar.avatar_id)}</h3>
               {avatar.type && (
                 <div className="avatar-type">{formatAvatarType(avatar.type)}</div>
               )}

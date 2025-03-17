@@ -1,0 +1,4 @@
+/* Make sure there's no CSS rule hiding the summary tab */
+.navigation-item {
+  display: flex; /* Ensure items are displayed */
+} 
