@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 const NavigationContext = createContext(null);
 
 // Define all available tabs
-const AVAILABLE_TABS = ['home', 'voices', 'avatars', 'script', 'summary', 'videos'];
+const AVAILABLE_TABS = ['home', 'voices', 'avatars', 'script', 'summary', 'generation', 'videos'];
 
 // Define the workflow steps
 const WORKFLOW_STEPS = [
@@ -45,6 +45,16 @@ const WORKFLOW_STEPS = [
   }
 ];
 
+// Update steps to include the generation step
+const defaultSteps = [
+  { label: 'Voice', path: 'voices' },
+  { label: 'Avatar', path: 'avatars' },
+  { label: 'Script', path: 'script' },
+  { label: 'Summary', path: 'summary' },
+  { label: 'Generation', path: 'generation' },
+  { label: 'Videos', path: 'videos' }
+];
+
 export const NavigationProvider = ({ children }) => {
   // State for active tab and workflow
   const [activeTab, setActiveTab] = useState('home');
@@ -79,6 +89,14 @@ export const NavigationProvider = ({ children }) => {
       setWorkflowState(prev => ({
         ...prev,
         activeStep: stepIndex
+      }));
+    }
+
+    // Add the generation tab to your navigation logic
+    if (tabName === 'generation') {
+      setWorkflowState(prev => ({
+        ...prev,
+        activeStep: 4, // Adjust based on your step index
       }));
     }
   }, []);
@@ -209,7 +227,7 @@ export const NavigationProvider = ({ children }) => {
 // Custom hook for using navigation
 export const useNavigation = () => {
   const context = useContext(NavigationContext);
-  
+  console.log('Navigation context requested, value:', context);
   if (!context) {
     throw new Error('useNavigation must be used within a NavigationProvider');
   }

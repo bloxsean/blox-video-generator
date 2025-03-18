@@ -212,7 +212,7 @@ const VideoList = () => {
         <div className="video-actions">
           {video.proxied_video_url && (
             <button 
-              className="video-action-button play-button"
+              className="video-action-button play-button"             
               onClick={() => toggleVideoPlayback(video.video_id)}
             >
               {playingVideo === video.video_id ? 'Pause' : 'Play'}
@@ -296,6 +296,7 @@ const VideoList = () => {
   
   return (
     <div className="video-list-container">
+      
       <h2>Your Videos</h2>
       
       {error && (
@@ -318,7 +319,7 @@ const VideoList = () => {
                   key={videoKey}
                   className="video-item" 
                   style={{ 
-                    background: video._hasValidThumbnail ? 'white' : `linear-gradient(to bottom right, white, ${getCardColor(video.video_id)})` 
+                    background: video._hasValidThumbnail ? '#162033' : `linear-gradient(to bottom right, white, ${getCardColor(video.video_id)})` 
                   }}
                 >
                   <div className="video-preview">

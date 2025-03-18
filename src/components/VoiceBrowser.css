@@ -430,3 +430,169 @@
     padding: 1.5rem;
   }
 }
+
+/* Row-based voice list */
+.voice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Individual voice row */
+.voice-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #111827;
+  border: 1px solid #1f2937;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.voice-row:hover {
+  border-color: #4b5563;
+}
+
+.voice-row.selected {
+  background-color: rgba(56, 189, 248, 0.1);
+  border-color: #38bdf8;
+}
+
+/* Voice information section */
+.voice-row .voice-info {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.voice-name {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+/* Voice details section */
+.voice-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.voice-attribute {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.attribute-label {
+  font-weight: 500;
+  color: #d1d5db;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.premium {
+  background-color: #7e22ce;
+  color: white;
+}
+
+.status-badge.free {
+  background-color: #16a34a;
+  color: white;
+}
+
+.tag-badge {
+  display: inline-block;
+  margin-right: 6px;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: #1f2937;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* Action buttons section */
+.voice-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  min-width: 120px;
+  height: 40px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.play-sample-btn {
+  background-color: #1e40af;
+  color: white;
+}
+
+.play-sample-btn:hover {
+  background-color: #1e3a8a;
+}
+
+.play-sample-btn.playing {
+  background-color: #dc2626;
+}
+
+.select-voice-btn {
+  background-color: #2563eb;
+  color: white;
+}
+
+.select-voice-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.select-voice-btn.selected {
+  background-color: #10b981;
+}
+
+.btn-icon {
+  margin-right: 6px;
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 768px) {
+  .voice-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .voice-info {
+    margin-right: 0;
+    margin-bottom: 16px;
+    width: 100%;
+  }
+  
+  .voice-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .action-btn {
+    flex: 1;
+  }
+}

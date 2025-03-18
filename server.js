@@ -12,12 +12,27 @@ const __dirname = dirname(__filename);
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+//app.use(cors());
+
+// Update CORS configuration to explicitly allow POST
+app.use(cors({
+  methods: ['GET', 'POST'], // explicitly allow both methods
+  origin: 'http://localhost:5173', // or whatever your frontend origin is
+  credentials: true
+}));
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
 const PORT = process.env.PORT || 3001;
-const HEYGEN_API_KEY = process.env.HEYGEN_API_KEY;
+const HEYGEN_API_KEY = 'MmEwZTk5YzIxMmEyNDgxOWFkNjdhNzY2YmZlNGUwZGEtMTc0MTE4Mzk5Ng==';
 const API_BASE_URL = 'https://api.heygen.com/v2';
+
+// Add this temporary test endpoint
+app.post('/api/test', (req, res) => {
+  res.json({ message: 'Test endpoint working', HEYGEN_API_KEY: HEYGEN_API_KEY });
+});
 
 // Validate API key middleware
 const validateApiKey = (req, res, next) => {
@@ -33,6 +48,23 @@ const validateApiKey = (req, res, next) => {
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'dist')));
+
+// Add this middleware before your API routes:
+app.use((req, res, next) => {
+  if (req.path === '/api/generate-video' && req.method === 'POST') {
+    console.log('==== GENERATE VIDEO REQUEST ====');
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('Raw body:', JSON.stringify(req.body, null, 2));
+    console.log('Body type:', typeof req.body);
+    console.log('Avatar exists:', !!req.body.avatar);
+    if (req.body.avatar) {
+      console.log('Avatar type:', typeof req.body.avatar);
+      console.log('Avatar has avatar_id:', 'avatar_id' in req.body.avatar);
+      console.log('Avatar properties:', Object.keys(req.body.avatar));
+    }
+  }
+  next();
+});
 
 // List voices
 app.get('/api/voices', validateApiKey, async (req, res) => {
@@ -160,6 +192,185 @@ app.get('/api/avatars', validateApiKey, async (req, res) => {
   }
 });
 
+// Video generation endpoints
+// Generate a video
+app.post('/api/generate-video', validateApiKey, async (req, res) => {
+  try {
+    console.log('Starting video generation with data:', JSON.stringify(req.body, null, 2));
+    
+    // Debug the request structure more deeply
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body constructor:', req.body.constructor.name);
+    console.log('Request body avatar (if any):', req.body.avatar);
+    
+    // Extract data with fallbacks
+    const avatar = req.body.avatar || {};
+    const voice = req.body.voice || {};
+    const script = req.body.script || '';
+    const settings = req.body.settings || {};
+    
+    console.log('Extracted data:', { avatar, voice, script });
+    
+    // Check for avatar_id and voice_id
+    if (!avatar.avatar_id) {
+      console.error('Missing avatar_id in request');
+      return res.status(400).json({
+        error: 'Invalid data format',
+        details: 'The avatar object must have an avatar_id property'
+      });
+    }
+
+    if (!voice.voice_id) {
+      console.error('Missing voice_id in request');
+      return res.status(400).json({
+        error: 'Invalid data format',
+        details: 'The voice object must have a voice_id property'
+      });
+    }
+    
+    // Prepare the request payload according to HeyGen v2 API structure
+    const payload = {
+      video_inputs: [
+        {
+          character: {
+            type: "avatar",
+            avatar_id: avatar.avatar_id,
+            scale: 1.0
+          },
+          voice: {
+            type: "text",
+            voice_id: voice.voice_id,
+            input_text: script
+          },
+          background: {
+            type: "color",
+            value: settings?.backgroundColor || "#f6f6fc"
+          }
+        }
+      ],
+      title: settings?.title || "Generated Video",
+      dimension: {
+        width: 1920,
+        height: 1080
+      }
+    };
+    
+    console.log('Sending payload to HeyGen API:', JSON.stringify(payload, null, 2));
+    
+    // Call HeyGen's v2 video generation API with the correct endpoint
+    const response = await axios.post(`https://api.heygen.com/v2/video/generate`, payload, {
+      headers: {
+        'X-Api-Key': HEYGEN_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    
+    console.log('Video generation response:', response.data);
+    
+    // Return the video ID from the HeyGen API
+    res.json({
+      error: null,
+      video_id: response.data.video_id // Note: The direct structure from v2 API
+    });
+  } catch (error) {
+    console.error('Error generating video:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+      stack: error.stack
+    });
+    
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to generate video',
+      details: error.response?.data?.message || error.message
+    });
+  }
+});
+
+// Check video status
+app.get('/api/videos/:videoId/status', validateApiKey, async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    console.log(`Checking status for video ID: ${videoId}`);
+    
+    // Call HeyGen's video status API
+    const response = await axios.get(`${API_BASE_URL}/videos/${videoId}`, {
+      headers: {
+        'X-Api-Key': HEYGEN_API_KEY,
+        'Accept': 'application/json'
+      }
+    });
+    
+    console.log('Video status response:', response.data);
+    
+    // Map HeyGen status to our frontend expected format
+    const statusMapping = {
+      pending: 'processing',
+      processing: 'processing',
+      completed: 'completed',
+      failed: 'failed'
+    };
+    
+    res.json({
+      error: null,
+      status: statusMapping[response.data.data.status] || response.data.data.status,
+      progress: response.data.data.progress || 0
+    });
+  } catch (error) {
+    console.error('Error checking video status:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to check video status',
+      details: error.response?.data?.message || error.message
+    });
+  }
+});
+
+// Get video details
+app.get('/api/videos/:videoId', validateApiKey, async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    console.log(`Getting details for video ID: ${videoId}`);
+    
+    // Call HeyGen's video details API
+    const response = await axios.get(`${API_BASE_URL}/videos/${videoId}`, {
+      headers: {
+        'X-Api-Key': HEYGEN_API_KEY,
+        'Accept': 'application/json'
+      }
+    });
+    
+    console.log('Video details response:', response.data);
+    
+    // Format the response for our frontend
+    res.json({
+      error: null,
+      id: response.data.data.video_id,
+      status: response.data.data.status,
+      video_url: response.data.data.video_url,
+      proxied_video_url: response.data.data.video_url, // Original URL
+      thumbnail_url: response.data.data.thumbnail_url,
+      created_at: response.data.data.created_at
+    });
+  } catch (error) {
+    console.error('Error getting video details:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to get video details',
+      details: error.response?.data?.message || error.message
+    });
+  }
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
@@ -170,8 +381,25 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Add this right before your app.listen() call
+console.log('=== Registered Routes ===');
+app._router.stack.forEach(function(r){
+  if (r.route && r.route.path){
+    console.log(`${Object.keys(r.route.methods)} ${r.route.path}`);
+  }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`HeyGen API Key configured: ${HEYGEN_API_KEY ? 'Yes' : 'No'}`);
+});
+
+// Add this simple POST test endpoint
+app.post('/api/test-post', (req, res) => {
+  console.log('Received POST data:', req.body);
+  res.json({
+    message: 'POST test successful',
+    receivedData: req.body
+  });
 });

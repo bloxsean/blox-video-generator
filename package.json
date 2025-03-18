@@ -11,7 +11,8 @@
     "dev": "concurrently --kill-others-on-fail \"npm run dev:server\" \"npm run dev:client\"",
     "build": "vite build",
     "serve": "npm run build && npm start",
-    "server": "node server.js"
+    "server": "node server.js",
+    "test-heygen": "node src/server/heygenTest.js"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

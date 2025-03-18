@@ -23,7 +23,7 @@ const VideoCreationSummary = () => {
   const { wordCount, duration } = getScriptStats();
   
   const handleContinueToVideos = () => {
-    navigateToTab('videos');
+    navigateToTab('generation');
   };
 
   const handleBack = () => {

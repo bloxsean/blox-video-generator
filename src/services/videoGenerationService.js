@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// API configuration with proxy server
+// Change back to using a local proxy server
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Create an axios instance for the proxy server
@@ -20,120 +20,41 @@ const apiClient = axios.create({
  * @param {Object} data.settings - Additional settings for video generation
  * @returns {Promise<Object>} - The API response with video_id
  */
-export const generateVideo = async (data) => {
-  console.log('VideoGenerationService - generateVideo called with:', {
-    avatar: data.avatar ? {
-      avatar_id: data.avatar.avatar_id,
-      avatar_name: data.avatar.avatar_name || data.avatar.name,
-    } : 'No avatar provided',
-    voice: data.voice ? {
-      voice_id: data.voice.voice_id,
-      voice_name: data.voice.voice_name || data.voice.name,
-    } : 'No voice provided',
-    script: data.script ? `${data.script.substring(0, 20)}${data.script.length > 20 ? '...' : ''}` : 'No script provided',
-    settings: data.settings ? {
-      ...data.settings,
-      // Don't log full background data if it's an image or video
-      background: data.settings.background ? {
-        type: data.settings.background.type,
-        ...(data.settings.background.type === 'color' && { value: data.settings.background.value }),
-        ...(data.settings.background.type !== 'color' && { url: 'URL present but not logged' }),
-      } : 'Default background',
-    } : 'No settings provided',
-  });
-  
+
+// Add this after your initial middleware setup but before routes
+// app.use((req, res, next) => {
+//   console.log('Incoming request:', {
+//     method: req.method,
+//     path: req.path,
+//     body: req.body
+//   });
+//   next();
+// });
+
+export const generateVideo = async (videoData) => {
   try {
-    const { avatar, voice, script, settings = {} } = data;
+    console.log('Request data being sent to server:', videoData);
+    console.log('Request JSON:', JSON.stringify(videoData));
     
-    // Validate required fields
-    if (!avatar || !avatar.avatar_id) {
-      console.error('VideoGenerationService - Missing required field: avatar.avatar_id');
-      throw new Error('Missing required field: avatar.avatar_id');
-    }
-    if (!voice || !voice.voice_id) {
-      console.error('VideoGenerationService - Missing required field: voice.voice_id');
-      throw new Error('Missing required field: voice.voice_id');
-    }
-    if (!script) {
-      console.error('VideoGenerationService - Missing required field: script');
-      throw new Error('Missing required field: script');
-    }
-    
-    // Logging voice_id and avatar_id specifically
-    console.log('VideoGenerationService - Critical IDs:', {
-      avatar_id: avatar.avatar_id,
-      voice_id: voice.voice_id,
+    const response = await fetch('http://localhost:3001/api/generate-video', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(videoData),
     });
     
-    // Construct the request payload based on the HeyGen API structure
-    const payload = {
-      title: settings.title || "Generated Video",
-      video_inputs: [
-        {
-          character: {
-            type: "avatar",
-            avatar_id: avatar.avatar_id,
-            scale: settings.avatarScale || 1,
-            avatar_style: settings.avatarStyle || "normal",
-            offset: settings.avatarOffset || { x: 0, y: 0 },
-            matting: settings.avatarMatting || "false",
-          },
-          voice: {
-            type: "text",
-            voice_id: voice.voice_id,
-            input_text: script,
-            speed: settings.voiceSpeed || 1,
-            pitch: settings.voicePitch || 0,
-            // ...(settings.voiceEmotion && { emotion: settings.voiceEmotion }),
-            // ...(settings.voiceLocale && { locale: settings.voiceLocale }),
-          },
-          // background: settings.background || {
-          //   type: "color",
-          //   value: "#f6f6fc",
-          // },
-        },
-      ],
-      dimension: {
-        width: 1280,
-        height: 720,
-      },
-      // caption: settings.caption || false,
-    };
-
-    console.log('VideoGenerationService - Submitting video generation request:', payload);
-    
-    // Call our proxy server instead of the HeyGen API directly
-    const response = await apiClient.post('/generate-video', payload);
-    console.log('VideoGenerationService - Video generation successful:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('VideoGenerationService - Error generating video:', error);
-    
-    // Enhanced error handling with detailed logging
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error('VideoGenerationService - API Response Error Details:', {
-        status: error.response.status,
-        statusText: error.response.statusText,
-        data: error.response.data,
-        headers: error.response.headers,
-      });
-      throw new Error(`API Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error('VideoGenerationService - No Response Error Details:', {
-        request: error.request,
-      });
-      throw new Error('No response received from server. Please check your connection.');
-    } else {
-      // Something happened in setting up the request
-      console.error('VideoGenerationService - Request Setup Error Details:', {
-        message: error.message,
-        stack: error.stack,
-      });
-      throw new Error(`Request Error: ${error.message}`);
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
     }
+    
+    const data = await response.json();
+    console.log('API response received:', data);
+    
+    return data;
+  } catch (error) {
+    console.error('Error in generateVideo service:', error);
+    throw error;
   }
 };
 
@@ -145,7 +66,7 @@ export const generateVideo = async (data) => {
 export const checkVideoStatus = async (videoId) => {
   console.log('VideoGenerationService - Checking video status:', { videoId });
   try {
-    const response = await apiClient.get(`/video-status/${videoId}`);
+    const response = await apiClient.get(`/videos/${videoId}/status`);
     console.log('VideoGenerationService - Video status:', response.data);
     return response.data;
   } catch (error) {
@@ -154,6 +75,12 @@ export const checkVideoStatus = async (videoId) => {
       videoId,
       response: error.response?.data,
     });
+    
+    // More specific error message
+    if (error.response?.status === 404) {
+      throw new Error(`Video ID ${videoId} not found or status endpoint not available`);
+    }
+    
     throw new Error('Failed to check video status');
   }
 };
@@ -179,6 +106,12 @@ export const getVideoDetails = async (videoId) => {
       videoId,
       response: error.response?.data,
     });
+    
+    // More specific error message
+    if (error.response?.status === 404) {
+      throw new Error(`Video ID ${videoId} not found or details endpoint not available`);
+    }
+    
     throw new Error('Failed to get video details');
   }
 };
@@ -211,12 +144,9 @@ export const deleteVideo = async (videoId) => {
  */
 export const getVideoList = async (token = null) => {
   try {
-    // Construct query params if token is provided
     const params = token ? { token } : {};
-    
-    // Make the API request
-    console.log('Making request to videos-with-details endpoint...');
-    const response = await apiClient.get('/videos-with-details', { params });
+    console.log('Making request to videos endpoint...');
+    const response = await apiClient.get('/videos', { params });
     
     // Debug the response structure before processing
     console.log('Raw API response structure:', {
@@ -276,3 +206,16 @@ export const getVideoList = async (token = null) => {
     throw error;
   }
 }; 
+
+
+
+// // After all your routes are defined, add this to list all registered routes
+// app.listen(PORT, () => {
+//   console.log('Registered Routes:');
+//   app._router.stack.forEach(function(r){
+//     if (r.route && r.route.path){
+//       console.log(`${Object.keys(r.route.methods)} ${r.route.path}`);
+//     }
+//   });
+//   console.log(`Server is running on port ${PORT}`);
+// });

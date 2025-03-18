@@ -379,7 +379,7 @@ const AvatarBrowser = () => {
             <div className="avatar-details">
               <h3>{avatar.avatar_name || formatAvatarName(avatar.avatar_id)}</h3>
               {avatar.type && (
-                <div className="avatar-type">{formatAvatarType(avatar.type)}</div>
+                <div className="avatar-type">{formatAvatarType(avatar.gender)}</div>
               )}
               <div className="avatar-status">
                 {avatar.premium ? (

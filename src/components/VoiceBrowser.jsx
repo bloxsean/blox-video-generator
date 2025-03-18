@@ -45,9 +45,13 @@ const VoiceBrowser = () => {
   const [voices, setVoices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [playingVoice, setPlayingVoice] = useState(null);
-  const [audioElement, setAudioElement] = useState(null);
-  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
-  const [currentVoiceInfo, setCurrentVoiceInfo] = useState(null);
+  const [audioElement, setAudioElement] = useState(new Audio());
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [audioContext, setAudioContext] = useState(null);
+  const [analyser, setAnalyser] = useState(null);
+  const [dataArray, setDataArray] = useState(null);
+  const [animationFrame, setAnimationFrame] = useState(null);
+  const [sourceNode, setSourceNode] = useState(null);
 
   // Helper function to save voices to local storage
   const saveVoicesToLocalStorage = (voicesData) => {
@@ -166,6 +170,40 @@ const VoiceBrowser = () => {
         audioElement.pause();
         audioElement.src = '';
       }
+      audioElement.removeEventListener('timeupdate', updateProgress);
+      
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+      
+      if (audioContext && audioContext.state !== 'closed') {
+        audioContext.close();
+      }
+    };
+  }, []);
+
+  // Initialize Web Audio API when component mounts
+  useEffect(() => {
+    // Create audio context
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const analyserNode = context.createAnalyser();
+    analyserNode.fftSize = 256;
+    
+    const bufferLength = analyserNode.frequencyBinCount;
+    const dataArr = new Uint8Array(bufferLength);
+    
+    setAudioContext(context);
+    setAnalyser(analyserNode);
+    setDataArray(dataArr);
+    
+    return () => {
+      // Clean up
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+      if (context && context.state !== 'closed') {
+        context.close();
+      }
     };
   }, []);
 
@@ -185,30 +223,58 @@ const VoiceBrowser = () => {
     return voiceId === selectedId;
   };
 
-  // Function to play voice sample
+  // Simple, robust audio implementation that works reliably
   const playVoiceSample = (voice) => {
     if (!voice.preview_url) {
       console.warn('No preview URL available for voice:', voice.name);
       return;
     }
 
-    setCurrentVoiceInfo(voice);
-    setShowAudioPlayer(true);
-
-    // Create new audio element
-    const audio = new Audio(voice.preview_url);
+    // If we're already playing this voice, pause it
+    if (playingVoice === voice.voice_id) {
+      audioElement.pause();
+      setPlayingVoice(null);
+      setAudioProgress(0);
+      return;
+    }
     
-    audio.addEventListener('play', () => setPlayingVoice(voice.voice_id));
-    audio.addEventListener('pause', () => setPlayingVoice(null));
-    audio.addEventListener('ended', () => setPlayingVoice(null));
+    // If we're playing a different voice, stop that one first
+    if (playingVoice) {
+      audioElement.pause();
+      setAudioProgress(0);
+    }
     
-    // Store the audio element
-    setAudioElement(audio);
+    // Create a new audio element each time to avoid issues
+    const newAudioElement = new Audio();
+    
+    // Set up event listeners
+    newAudioElement.addEventListener('timeupdate', updateProgress);
+    newAudioElement.addEventListener('ended', () => {
+      setPlayingVoice(null);
+      setAudioProgress(0);
+    });
+    
+    // Set the source after adding event listeners
+    newAudioElement.src = voice.preview_url;
+    
+    // Store the element and update state
+    setAudioElement(newAudioElement);
+    setPlayingVoice(voice.voice_id);
     
     // Play the audio
-    audio.play().catch(err => {
+    newAudioElement.play().catch(err => {
       console.error('Error playing audio:', err);
+      setPlayingVoice(null);
     });
+  };
+
+  // Function to update progress
+  const updateProgress = (event) => {
+    const audio = event.target;
+    if (audio && audio.duration) {
+      const progress = (audio.currentTime / audio.duration) * 100;
+      setAudioProgress(progress);
+    }
   };
 
   // Function to stop voice sample
@@ -216,10 +282,10 @@ const VoiceBrowser = () => {
     if (audioElement) {
       audioElement.pause();
       audioElement.currentTime = 0;
+      audioElement.removeEventListener('timeupdate', updateProgress);
     }
     setPlayingVoice(null);
-    setShowAudioPlayer(false);
-    setCurrentVoiceInfo(null);
+    setAudioProgress(0);
   };
 
   // Handle stepper navigation
@@ -237,6 +303,83 @@ const VoiceBrowser = () => {
     console.log(`VoiceBrowser: Step clicked, navigating to ${tabName}`);
     navigateToTab(tabName);
   };
+
+  // Add this function to draw the waveform
+  const drawWaveform = (canvasRef) => {
+    if (!analyser || !dataArray || !canvasRef || !canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const canvasCtx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Clear the canvas
+    canvasCtx.clearRect(0, 0, width, height);
+    
+    // Draw the waveform
+    analyser.getByteFrequencyData(dataArray);
+    
+    canvasCtx.fillStyle = '#111827';
+    canvasCtx.fillRect(0, 0, width, height);
+    
+    const barWidth = (width / dataArray.length) * 2.5;
+    let x = 0;
+    
+    for (let i = 0; i < dataArray.length; i++) {
+      const barHeight = (dataArray[i] / 255) * height;
+      
+      canvasCtx.fillStyle = `rgb(56, 189, 248)`;
+      canvasCtx.fillRect(x, height - barHeight, barWidth, barHeight);
+      
+      x += barWidth + 1;
+    }
+    
+    const frame = requestAnimationFrame(() => drawWaveform(canvasRef));
+    setAnimationFrame(frame);
+  };
+
+  // First, create a component for the animated "fake" waveform
+  const AnimatedWaveform = () => {
+    // Generate random heights for the bars, but fewer of them for the horizontal layout
+    const bars = Array.from({ length: 10 }, () => Math.random() * 100);
+    
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        width: '90%',
+        height: '30px',
+        padding: '0 5px'
+      }}>
+        {bars.map((height, index) => (
+          <div 
+            key={index}
+            style={{
+              width: '3px',
+              height: `${25 * Math.max(0.2, height / 100)}px`,
+              backgroundColor: '#38bdf8',
+              borderRadius: '1px',
+              animation: `waveform-animation ${0.7 + Math.random() * 0.6}s ease-in-out infinite alternate`,
+              animationDelay: `${index * 0.08}s`
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  // Updated waveform animation styles
+  const waveformStyles = `
+    @keyframes waveform-animation {
+      0% {
+        height: 15%;
+      }
+      100% {
+        height: 85%;
+      }
+    }
+  `;
 
   const renderContent = () => {
     if (loading) {
@@ -273,7 +416,7 @@ const VoiceBrowser = () => {
             >
               Retry
             </button>
-            <button 
+            {/* <button 
               className="force-refresh-button"
               onClick={() => {
                 setLoading(true);
@@ -282,7 +425,7 @@ const VoiceBrowser = () => {
               }}
             >
               Force Refresh
-            </button>
+            </button> */}
           </div>
         </div>
       );
@@ -304,72 +447,203 @@ const VoiceBrowser = () => {
     }
 
     return (
-      <div className="voice-grid">
+      <div className="voice-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
         {filteredVoices.map((voice, index) => (
           <div 
             key={voice.voice_id || voice.id || `voice-${index}`} 
-            className={`voice-card ${isSelected(voice) ? 'selected' : ''}`}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px',
+              borderRadius: '8px',
+              backgroundColor: '#111827',
+              border: isSelected(voice) ? '1px solid #38bdf8' : '1px solid #1f2937',
+              transition: 'all 0.2s ease',
+              width: '100%'
+            }}
             onClick={() => handleVoiceSelect(voice)}
           >
-            <div className="voice-info">
-              <h3>{voice.voice_name || voice.name}</h3>
+            <div style={{ flex: 1, marginRight: '20px' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 600, color: '#e5e7eb' }}>
+                {voice.voice_name || voice.name}
+              </h3>
               
-              <div className="voice-details">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
                 {voice.language && (
-                  <div className="voice-language">Language: {voice.language}</div>
+                  <div style={{ fontSize: '14px', color: '#9ca3af' }}>
+                    <span style={{ fontWeight: 500, color: '#d1d5db' }}>Language:</span> {voice.language}
+                  </div>
                 )}
                 
                 {voice.gender && (
-                  <div className="voice-gender">Gender: {voice.gender}</div>
+                  <div style={{ fontSize: '14px', color: '#9ca3af' }}>
+                    <span style={{ fontWeight: 500, color: '#d1d5db' }}>Gender:</span> {voice.gender}
+                  </div>
                 )}
                 
-                <div className="voice-status">
+                <div>
                   {voice.premium ? (
-                    <span className="status-badge premium">Premium</span>
+                    <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500, backgroundColor: '#7e22ce', color: 'white' }}>
+                      Premium
+                    </span>
                   ) : (
-                    <span className="status-badge free">Free</span>
+                    <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500, backgroundColor: '#16a34a', color: 'white' }}>
+                      Free
+                    </span>
                   )}
                 </div>
                 
                 {voice.tags && voice.tags.length > 0 && (
-                  <div className="voice-tags">
+                  <div>
                     {voice.tags.map((tag, index) => (
-                      <span key={index} className="tag-badge">{tag}</span>
+                      <span 
+                        key={index} 
+                        style={{ 
+                          display: 'inline-block', 
+                          marginRight: '6px', 
+                          marginBottom: '6px', 
+                          padding: '2px 8px', 
+                          borderRadius: '4px', 
+                          backgroundColor: '#1f2937', 
+                          color: '#9ca3af', 
+                          fontSize: '12px' 
+                        }}
+                      >
+                        {tag}
+                      </span>
                     ))}
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="voice-actions">
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               {voice.preview_url && (
-                <button 
-                  className={`play-sample-btn ${playingVoice === voice.voice_id ? 'playing' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (playingVoice === voice.voice_id) {
-                      stopVoiceSample();
-                    } else {
-                      playVoiceSample(voice);
-                    }
-                  }}
-                >
-                  {playingVoice === voice.voice_id ? (
-                    <>
-                      <FiPause />
-                      Stop Preview
-                    </>
-                  ) : (
-                    <>
-                      <FiPlay />
-                      Play Preview
-                    </>
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  width: '240px' // Increased width to accommodate side-by-side layout
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    width: '100%',
+                    height: '40px',
+                  }}>
+                    {/* Waveform visualization to the left - only visible when voice is playing */}
+                    {playingVoice === voice.voice_id ? (
+                      <div 
+                        style={{ 
+                          width: '100px', 
+                          height: '40px',
+                          backgroundColor: '#1f2937',
+                          borderRadius: '6px 0 0 6px', // Rounded on left side only
+                          overflow: 'hidden',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <style>{waveformStyles}</style>
+                        <AnimatedWaveform />
+                      </div>
+                    ) : (
+                      <div 
+                        style={{ 
+                          width: '100px', 
+                          height: '40px',
+                          // backgroundColor: '#1f2937',
+                          borderRadius: '6px 0 0 6px', // Rounded on left side only
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#4b5563',
+                          fontSize: '12px',
+                          fontWeight: 500
+                        }}
+                      >
+                        
+                      </div>
+                    )}
+                    
+                    {/* Play/Stop button to the right */}
+                    <button 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '8px 16px',
+                        width: '140px',
+                        height: '40px',
+                        borderRadius: '0 6px 6px 0', // Rounded on right side only
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        border: 'none',
+                        cursor: 'pointer',
+                        backgroundColor: playingVoice === voice.voice_id ? '#dc2626' : '#1e40af',
+                        color: 'white'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playVoiceSample(voice);
+                      }}
+                    >
+                      {playingVoice === voice.voice_id ? (
+                        <>
+                          <FiPause style={{ marginRight: '6px' }} />
+                          <span>Stop Preview</span>
+                        </>
+                      ) : (
+                        <>
+                          <FiPlay style={{ marginRight: '6px' }} />
+                          <span>Play Preview</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  
+                  {/* Progress bar below the control strip */}
+                  {playingVoice === voice.voice_id && (
+                    <div 
+                      style={{ 
+                        width: '100%', 
+                        height: '4px', 
+                        backgroundColor: '#1f2937',
+                        overflow: 'hidden',
+                        marginTop: '2px',
+                        borderRadius: '0 0 6px 6px'
+                      }}
+                    >
+                      <div 
+                        style={{
+                          height: '100%',
+                          width: `${audioProgress}%`,
+                          backgroundColor: '#38bdf8',
+                          transition: 'width 0.1s linear'
+                        }}
+                      />
+                    </div>
                   )}
-                </button>
+                </div>
               )}
               
               <button 
-                className={`select-voice-btn ${isSelected(voice) ? 'selected' : ''}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '8px 16px',
+                  minWidth: '120px',
+                  height: '40px',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: isSelected(voice) ? '#10b981' : '#2563eb',
+                  color: 'white'
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleVoiceSelect(voice);
@@ -407,7 +681,7 @@ const VoiceBrowser = () => {
             />
           </div>
           
-          <button 
+          {/* <button 
             className="refresh-button"
             onClick={() => {
               setLoading(true);
@@ -416,7 +690,7 @@ const VoiceBrowser = () => {
             title="Refresh voices from server"
           >
             Refresh
-          </button>
+          </button> */}
         </div>
         
         {/* {selectedVoice && (
@@ -439,32 +713,6 @@ const VoiceBrowser = () => {
       <div className="voice-content">
         {renderContent()}
       </div>
-
-      {/* Audio Player Modal */}
-      {showAudioPlayer && currentVoiceInfo && (
-        <div className="audio-backdrop" onClick={stopVoiceSample}>
-          <div className="audio-player" onClick={e => e.stopPropagation()}>
-            <div className="audio-player-header">
-              <div className="audio-player-title">
-                {currentVoiceInfo.voice_name || currentVoiceInfo.name}
-              </div>
-              <button className="close-button" onClick={stopVoiceSample}>
-                <FiX />
-              </button>
-            </div>
-            <audio
-              controls
-              autoPlay
-              src={currentVoiceInfo.preview_url}
-              onEnded={stopVoiceSample}
-              onError={() => {
-                console.error('Error playing audio sample');
-                stopVoiceSample();
-              }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

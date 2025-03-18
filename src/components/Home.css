@@ -45,7 +45,7 @@
   animation: fadeIn 1s ease-out 0.2s both;
 }
 
-.cta-button {
+/* .cta-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -59,7 +59,42 @@
   cursor: pointer;
   transition: all 0.3s ease;
   animation: fadeIn 1s ease-out 0.4s both;
+} */
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  background: linear-gradient(to right, #38bdf8, #818cf8);
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: fadeIn 1s ease-out 0.4s both, pulse 2s ease-in-out infinite;
 }
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    /* box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); */
+  }
+  
+  70% {
+    transform: scale(1.05);
+    /* box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); */
+  }
+  
+  100% {
+    transform: scale(1);
+    /* box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); */
+  }
+}
+
+
 
 .cta-button:hover {
   transform: translateY(-2px);

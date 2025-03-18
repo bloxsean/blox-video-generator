@@ -83,6 +83,7 @@
   font-weight: 600;
   margin-bottom: 10px;
   line-height: 1.3;
+  color: #e5e7eb;
 }
 
 .video-status {
@@ -121,7 +122,7 @@
 
 .video-created {
   font-size: 0.9rem;
-  color: #666;
+  color: #cfcece;
 }
 
 .video-actions {
