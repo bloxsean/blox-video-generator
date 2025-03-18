@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getEnrichedVideoList, deleteVideo } from '../services/videoDataService';
 import './VideoList.css';
 import VideoPlayer from './VideoPlayer';
@@ -9,8 +9,6 @@ const VideoList = () => {
   const [error, setError] = useState(null);
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [playingVideo, setPlayingVideo] = useState(null);
-  const videoRefs = useRef({});
   
   const formatDate = (dateString) => {
     const date = typeof dateString === 'number' 
@@ -44,36 +42,6 @@ const VideoList = () => {
     fetchVideos();
   }, []);
 
-  useEffect(() => {
-    Object.entries(videoRefs.current).forEach(([videoId, videoElement]) => {
-      if (videoId !== playingVideo && videoElement) {
-        videoElement.pause();
-      }
-    });
-  }, [playingVideo]);
-  
-  const toggleVideoPlayback = (videoId) => {
-    const videoElement = videoRefs.current[videoId];
-    
-    if (!videoElement) return;
-    
-    if (playingVideo === videoId) {
-      videoElement.pause();
-      setPlayingVideo(null);
-    } else {
-      if (playingVideo) {
-        const currentlyPlaying = videoRefs.current[playingVideo];
-        if (currentlyPlaying) {
-          currentlyPlaying.pause();
-        }
-      }
-      
-      videoElement.play().catch(err => {
-        console.error("Error playing video:", err);
-      });
-      setPlayingVideo(videoId);
-    }
-  };
   
   const fetchVideos = async (token = null) => {
     try {
@@ -173,8 +141,6 @@ const VideoList = () => {
           videoUrl={video.proxied_video_url || null}
           thumbnailUrl={video.thumbnail_url || '/placeholder-thumbnail.svg'}
           title={video.title}
-          onPlay={() => setPlayingVideo(video.video_id)}
-          onPause={() => setPlayingVideo(null)}
           onError={(err) => console.error('Video playback error:', err)}
           rawVideo={video}
         />
@@ -210,14 +176,6 @@ const VideoList = () => {
     if (video.status === 'completed') {
       return (
         <div className="video-actions">
-          {video.proxied_video_url && (
-            <button 
-              className="video-action-button play-button"             
-              onClick={() => toggleVideoPlayback(video.video_id)}
-            >
-              {playingVideo === video.video_id ? 'Pause' : 'Play'}
-            </button>
-          )}
           {video.proxied_video_url && (
             <a 
               className="video-action-button download-button"
@@ -319,7 +277,7 @@ const VideoList = () => {
                   key={videoKey}
                   className="video-item" 
                   style={{ 
-                    background: video._hasValidThumbnail ? '#162033' : `linear-gradient(to bottom right, white, ${getCardColor(video.video_id)})` 
+                    background: video._hasValidThumbnail ? '#162033' : `#162033` 
                   }}
                 >
                   <div className="video-preview">

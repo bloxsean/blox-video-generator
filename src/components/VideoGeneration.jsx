@@ -358,20 +358,6 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
     }
   };
   
-  const forceRealApiCall = async () => {
-    try {
-      console.log('Forcing real API call...');
-      const result = await generateVideo({
-        avatar: selectedAvatar || { avatar_id: 'default_avatar_id' },
-        voice: selectedVoice || { voice_id: 'default_voice_id' },
-        script: scriptContent || 'This is a test script',
-        settings: { title: 'Force API Test' }
-      });
-      console.log('Forced API call result:', result);
-    } catch (error) {
-      console.error('Forced API call error:', error);
-    }
-  };
   
   // At the top level of your component
   try {
@@ -457,167 +443,10 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
               >
                 Start Video Generation
               </Button>
-              <Button 
-                variant="outlined" 
-                color="secondary" 
-                onClick={() => {
-                  console.log('Test button clicked');
-                  alert('Test button works');
-                }}
-                style={{ marginLeft: '10px' }}
-              >
-                Test Button
-              </Button>
-              <Button 
-                variant="outlined" 
-                color="secondary" 
-                onClick={async () => {
-                  console.log('Direct service test clicked');
-                  try {
-                    // Basic test data
-                    const testData = {
-                      caption: false,
-                      dimension: {
-                        width: 1280,
-                        height: 720
-                      },
-                      title: `Test Video - ${new Date().toLocaleString()}`,
-                      callback_id: "direct_test_" + Math.floor(Math.random() * 100000),
-                      video_inputs: [
-                        {
-                          character: {
-                            type: "avatar",
-                            scale: 1,
-                            avatar_style: "normal", 
-                            avatar_id: "Brent_sitting_office_front"
-                          },
-                          voice: {
-                            voice_id: "1985984feded457b9d013b4f6551ac94",
-                            type: "text",
-                            input_text: "This is a direct test of the video generation service."
-                          }
-                        }
-                      ]
-                    };
-                    
-                    console.log('Sending direct test data:', testData);
-                    const result = await generateVideo(testData);
-                    console.log('Direct test result:', result);
-                    alert('Service call completed, check console for results');
-                  } catch (err) {
-                    console.error('Direct test error:', err);
-                    alert('Error: ' + err.message);
-                  }
-                }}
-                style={{ marginLeft: '10px' }}
-              >
-                Direct API Test
-              </Button>
-              <Button 
-                variant="outlined" 
-                color="info" 
-                onClick={async () => {
-                  try {
-                    console.log('Testing echo service');
-                    const testData = {
-                      caption: false,
-                      dimension: {
-                        width: 1280,
-                        height: 720
-                      },
-                      title: `Echo Test - ${new Date().toLocaleString()}`,
-                      video_inputs: [/* your test data */]
-                    };
-                    
-                    const response = await fetch('http://localhost:3001/api/test-echo', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json'
-                      },
-                      body: JSON.stringify(testData)
-                    });
-                    
-                    const result = await response.json();
-                    console.log('Echo test result:', result);
-                    alert('Echo test completed, check console');
-                  } catch (err) {
-                    console.error('Echo test error:', err);
-                    alert('Echo test error: ' + err.message);
-                  }
-                }}
-              >
-                Test Echo Service
-              </Button>
-              <Button
-                variant="contained"
-                color="warning"
-                onClick={async () => {
-                  try {
-                    // Get API key (NEVER do this in production!)
-                    const apiKey = prompt("Enter HeyGen API key (UNSAFE - testing only):");
-                    if (!apiKey) return;
-                    
-                    // Prepare the data using your existing logic
-                    const avatarId = selectedAvatar.avatar_id || selectedAvatar.id;
-                    const voiceId = selectedVoice.voice_id || selectedVoice.id;
-                    
-                    const directData = {
-                      caption: false,
-                      dimension: {
-                        width: 1280,
-                        height: 720
-                      },
-                      title: `Direct Test - ${new Date().toLocaleString()}`,
-                      callback_id: "direct_" + Math.floor(Math.random() * 100000),
-                      video_inputs: [
-                        {
-                          character: {
-                            type: "avatar",
-                            scale: 1,
-                            avatar_style: "normal",
-                            avatar_id: avatarId
-                          },
-                          voice: {
-                            voice_id: voiceId,
-                            type: "text",
-                            input_text: scriptContent
-                          }
-                        }
-                      ]
-                    };
-                    
-                    // Make direct API call
-                    const response = await fetch('https://api.heygen.com/v2/video/generate', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': apiKey
-                      },
-                      body: JSON.stringify(directData)
-                    });
-                    
-                    const data = await response.json();
-                    console.log('Direct API response:', data);
-                    
-                    if (data.video_id) {
-                      setVideoId(data.video_id);
-                      setProgress(20);
-                      setStatusMessage('Direct API call successful! Video processing...');
-                    } else {
-                      throw new Error(data.error || 'No video_id returned');
-                    }
-                  } catch (err) {
-                    console.error('Direct API error:', err);
-                    setError('Direct API call failed: ' + err.message);
-                  }
-                }}
-              >
-                Emergency Direct API Call
-              </Button>
             </Box>
           )}
           
-          {!videoUrl && !error && (
+          {(loading || (videoId && !videoUrl)) && !error && (
             <>
               <Box className="progress-indicator">
                 <CircularProgress size={60} />
@@ -630,6 +459,18 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
                 value={progress} 
                 className="progress-bar" 
               />
+              <Box sx={{ mt: 2, textAlign: 'center', color: 'text.primary' }}>
+                <Typography variant="body1" color="#000000" sx={{ mb: 2 }}>
+                  You can safely navigate away from this page. Your video will continue to process and will be available in your videos list when complete.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={handleViewAllVideos}
+                  sx={{ mt: 1 }}
+                >
+                  View All Videos
+                </Button>
+              </Box>
               {testMode && (
                 <Typography variant="caption" style={{ marginTop: '10px' }}>
                   Using mock data in test mode - video ID: {videoId || 'not yet generated'}
@@ -663,14 +504,6 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
                 >
                   Create Another Video
                 </Button>
-                <Button 
-                  variant="outlined" 
-                  color="secondary" 
-                  onClick={forceRealApiCall}
-                  style={{ marginTop: '10px' }}
-                >
-                  Force Real API Call
-                </Button>
               </Box>
               {testMode && (
                 <Typography variant="caption" style={{ marginTop: '20px' }}>
@@ -685,4 +518,4 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
   );
 };
 
-export default VideoGeneration; 
+export default VideoGeneration;

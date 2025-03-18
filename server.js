@@ -17,9 +17,10 @@ const app = express();
 
 // Update CORS configuration to explicitly allow POST
 app.use(cors({
-  methods: ['GET', 'POST'], // explicitly allow both methods
-  origin: 'http://localhost:5173', // or whatever your frontend origin is
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // allow all needed methods
+  origin: 'http://localhost:5173',
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'X-Api-Key', 'Accept']
 }));
 
 app.use(express.json());
@@ -27,7 +28,8 @@ app.use(express.urlencoded({ extended: true })); // for parsing application/x-ww
 
 const PORT = process.env.PORT || 3001;
 const HEYGEN_API_KEY = 'MmEwZTk5YzIxMmEyNDgxOWFkNjdhNzY2YmZlNGUwZGEtMTc0MTE4Mzk5Ng==';
-const API_BASE_URL = 'https://api.heygen.com/v2';
+const API_BASE_URL_V2 = 'https://api.heygen.com/v2';
+const API_BASE_URL_V1 = 'https://api.heygen.com/v1';
 
 // Add this temporary test endpoint
 app.post('/api/test', (req, res) => {
@@ -56,11 +58,11 @@ app.use((req, res, next) => {
     console.log('Content-Type:', req.headers['content-type']);
     console.log('Raw body:', JSON.stringify(req.body, null, 2));
     console.log('Body type:', typeof req.body);
-    console.log('Avatar exists:', !!req.body.avatar);
-    if (req.body.avatar) {
-      console.log('Avatar type:', typeof req.body.avatar);
-      console.log('Avatar has avatar_id:', 'avatar_id' in req.body.avatar);
-      console.log('Avatar properties:', Object.keys(req.body.avatar));
+    console.log('video_inputs exists:', !!req.body.video_inputs);
+    if (req.body.video_inputs?.[0]?.character) {
+      console.log('Character type:', typeof req.body.video_inputs[0].character);
+      console.log('Character has avatar_id:', 'avatar_id' in req.body.video_inputs[0].character);
+      console.log('Character properties:', Object.keys(req.body.video_inputs[0].character));
     }
   }
   next();
@@ -71,7 +73,7 @@ app.get('/api/voices', validateApiKey, async (req, res) => {
   try {
     console.log('Fetching voices from HeyGen API...');
     
-    const response = await axios.get(`${API_BASE_URL}/voices`, {
+    const response = await axios.get(`${API_BASE_URL_V2}/voices`, {
       headers: {
         'X-Api-Key': HEYGEN_API_KEY,
         'Accept': 'application/json'
@@ -131,7 +133,7 @@ app.get('/api/avatars', validateApiKey, async (req, res) => {
   try {
     console.log('Fetching avatars from HeyGen API...');
     
-    const response = await axios.get(`${API_BASE_URL}/avatars`, {
+    const response = await axios.get(`${API_BASE_URL_V2}/avatars`, {
       headers: {
         'X-Api-Key': HEYGEN_API_KEY,
         'Accept': 'application/json'
@@ -194,71 +196,81 @@ app.get('/api/avatars', validateApiKey, async (req, res) => {
 
 // Video generation endpoints
 // Generate a video
+// app.post('/api/generate-video', validateApiKey, async (req, res) => {
+//   try {
+//     console.log('Starting video generation with data:', JSON.stringify(req.body, null, 2));
+    
+//     // Validate required fields
+//     const { video_inputs } = req.body;
+    
+//     if (!video_inputs?.[0]?.character?.avatar_id) {
+//       return res.status(400).json({
+//         error: 'Invalid data format',
+//         details: 'The character object must have an avatar_id property'
+//       });
+//     }
+    
+//     if (!video_inputs?.[0]?.voice?.voice_id) {
+//       return res.status(400).json({
+//         error: 'Invalid data format',
+//         details: 'The voice object must have a voice_id property'
+//       });
+//     }
+    
+//     // Prepare the HeyGen API payload
+//     const payload = {
+//       video_inputs: [
+//         {
+//           character: {
+//             type: "avatar",
+//             avatar_id: avatar.avatar_id,
+//             scale: 1.0
+//           },
+//           voice: {
+//             type: "text",
+//             voice_id: voice.voice_id,
+//             input_text: script
+//           },
+//           background: {
+//             type: "color",
+//             value: settings?.backgroundColor || "#f6f6fc"
+//           }
+//         }
+//       ],
+//       title: settings?.title || "Generated Video",
+//       dimension: {
+//         width: 1920,
+//         height: 1080
+//       }
+//     };
+      // Generate a video
 app.post('/api/generate-video', validateApiKey, async (req, res) => {
   try {
     console.log('Starting video generation with data:', JSON.stringify(req.body, null, 2));
-    
-    // Debug the request structure more deeply
-    console.log('Request body keys:', Object.keys(req.body));
-    console.log('Request body constructor:', req.body.constructor.name);
-    console.log('Request body avatar (if any):', req.body.avatar);
-    
-    // Extract data with fallbacks
-    const avatar = req.body.avatar || {};
-    const voice = req.body.voice || {};
-    const script = req.body.script || '';
-    const settings = req.body.settings || {};
-    
-    console.log('Extracted data:', { avatar, voice, script });
-    
-    // Check for avatar_id and voice_id
-    if (!avatar.avatar_id) {
-      console.error('Missing avatar_id in request');
+
+    // Validate required fields
+    const { video_inputs } = req.body;
+
+    if (!video_inputs?.[0]?.character?.avatar_id) {
       return res.status(400).json({
         error: 'Invalid data format',
-        details: 'The avatar object must have an avatar_id property'
+        details: 'The character object must have an avatar_id property'
       });
     }
 
-    if (!voice.voice_id) {
-      console.error('Missing voice_id in request');
+    if (!video_inputs?.[0]?.voice?.voice_id) {
       return res.status(400).json({
         error: 'Invalid data format',
         details: 'The voice object must have a voice_id property'
       });
     }
-    
-    // Prepare the request payload according to HeyGen v2 API structure
-    const payload = {
-      video_inputs: [
-        {
-          character: {
-            type: "avatar",
-            avatar_id: avatar.avatar_id,
-            scale: 1.0
-          },
-          voice: {
-            type: "text",
-            voice_id: voice.voice_id,
-            input_text: script
-          },
-          background: {
-            type: "color",
-            value: settings?.backgroundColor || "#f6f6fc"
-          }
-        }
-      ],
-      title: settings?.title || "Generated Video",
-      dimension: {
-        width: 1920,
-        height: 1080
-      }
-    };
-    
+
+    // Use the provided payload directly since it already matches HeyGen's format
+    const payload = req.body;
+
     console.log('Sending payload to HeyGen API:', JSON.stringify(payload, null, 2));
     
-    // Call HeyGen's v2 video generation API with the correct endpoint
-    const response = await axios.post(`https://api.heygen.com/v2/video/generate`, payload, {
+    const response = await axios.post(`${API_BASE_URL_V2}/video/generate`, payload, {
       headers: {
         'X-Api-Key': HEYGEN_API_KEY,
         'Content-Type': 'application/json',
@@ -266,27 +278,39 @@ app.post('/api/generate-video', validateApiKey, async (req, res) => {
       }
     });
     
-    console.log('Video generation response:', response.data);
+    console.log('HeyGen API response:', response.data);
     
-    // Return the video ID from the HeyGen API
+    if (!response.data?.data?.video_id) {
+      console.error('Invalid HeyGen API response - missing video_id:', response.data);
+      return res.status(500).json({
+        error: 'Invalid API response',
+        details: 'Missing video_id in API response'
+      });
+    }
+    
     res.json({
       error: null,
-      video_id: response.data.video_id // Note: The direct structure from v2 API
+      video_id: response.data.data.video_id
     });
+    
   } catch (error) {
     console.error('Error generating video:', {
       status: error.response?.status,
       data: error.response?.data,
-      message: error.message,
-      stack: error.stack
+      message: error.message
     });
     
     res.status(error.response?.status || 500).json({
       error: 'Failed to generate video',
-      details: error.response?.data?.message || error.message
+      details: error.response?.data?.message || error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
+
+//from gemini
+
+
 
 // Check video status
 app.get('/api/videos/:videoId/status', validateApiKey, async (req, res) => {
@@ -294,8 +318,9 @@ app.get('/api/videos/:videoId/status', validateApiKey, async (req, res) => {
     const { videoId } = req.params;
     console.log(`Checking status for video ID: ${videoId}`);
     
-    // Call HeyGen's video status API
-    const response = await axios.get(`${API_BASE_URL}/videos/${videoId}`, {
+    // Call HeyGen's v1 video status API
+    const response = await axios.get(`${API_BASE_URL_V1}/video_status.get`, {
+      params: { video_id: videoId },
       headers: {
         'X-Api-Key': HEYGEN_API_KEY,
         'Accept': 'application/json'
@@ -314,8 +339,8 @@ app.get('/api/videos/:videoId/status', validateApiKey, async (req, res) => {
     
     res.json({
       error: null,
-      status: statusMapping[response.data.data.status] || response.data.data.status,
-      progress: response.data.data.progress || 0
+      status: statusMapping[response.data.status] || response.data.status,
+      progress: response.data.progress || 0
     });
   } catch (error) {
     console.error('Error checking video status:', {
@@ -337,8 +362,9 @@ app.get('/api/videos/:videoId', validateApiKey, async (req, res) => {
     const { videoId } = req.params;
     console.log(`Getting details for video ID: ${videoId}`);
     
-    // Call HeyGen's video details API
-    const response = await axios.get(`${API_BASE_URL}/videos/${videoId}`, {
+    // Call HeyGen's v2 video details API
+    const response = await axios.get(`${API_BASE_URL_V2}/video.get`, {
+      params: { video_id: videoId },
       headers: {
         'X-Api-Key': HEYGEN_API_KEY,
         'Accept': 'application/json'
