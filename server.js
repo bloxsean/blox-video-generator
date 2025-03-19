@@ -397,6 +397,60 @@ app.get('/api/videos/:videoId', validateApiKey, async (req, res) => {
   }
 });
 
+// Field59 API proxy endpoints
+app.post('/api/field59/upload', validateApiKey, async (req, res) => {
+  try {
+    const { url, title, username, password } = req.body;
+    
+    if (!url || !username || !password) {
+      return res.status(400).json({
+        error: 'Missing required parameters',
+        details: 'URL, username and password are required'
+      });
+    }
+    
+    // Create the XML payload
+    const fileName = url.split('/').pop()?.split('?')[0] || '';
+    const videoTitle = title || fileName.replace(/\.[^/.]+$/, '');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<video>
+  <title><![CDATA[${videoTitle}]]></title>
+  <url><![CDATA[${url}]]></url>
+</video>`;
+
+    // Send to Field59
+    const params = new URLSearchParams();
+    params.append('xml', xml);
+
+    const credentials = Buffer.from(`${username}:${password}`).toString('base64');
+    
+    const response = await axios.post('https://api.field59.com/v2/video/create', params, {
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+        'Accept': 'application/xml',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      responseType: 'text'
+    });
+    
+    // Return the response
+    res.setHeader('Content-Type', 'application/xml');
+    res.send(response.data);
+    
+  } catch (error) {
+    console.error('Error uploading to Field59:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to upload video to Field59',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
