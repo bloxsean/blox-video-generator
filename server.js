@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import path from 'path';
+import { DOMParser } from '@xmldom/xmldom';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,6 +31,23 @@ const PORT = process.env.PORT || 3001;
 const HEYGEN_API_KEY = 'MmEwZTk5YzIxMmEyNDgxOWFkNjdhNzY2YmZlNGUwZGEtMTc0MTE4Mzk5Ng==';
 const API_BASE_URL_V2 = 'https://api.heygen.com/v2';
 const API_BASE_URL_V1 = 'https://api.heygen.com/v1';
+
+// Field59 API configuration
+const FIELD59_USERNAME = process.env.FIELD59_USERNAME || import.meta.env.VITE_FIELD59_USERNAME;
+const FIELD59_PASSWORD = process.env.FIELD59_PASSWORD || import.meta.env.VITE_FIELD59_PASSWORD;
+const FIELD59_BASE_URL = 'https://api.field59.com';
+
+// Middleware to validate Field59 credentials
+const validateField59Credentials = (req, res, next) => {
+  if (!FIELD59_USERNAME || !FIELD59_PASSWORD) {
+    console.error('Field59 credentials are not configured');
+    return res.status(500).json({ 
+      error: 'Field59 credentials are not configured',
+      details: 'Please check your .env file and ensure FIELD59_USERNAME and FIELD59_PASSWORD are set correctly'
+    });
+  }
+  next();
+};
 
 // Add this temporary test endpoint
 app.post('/api/test', (req, res) => {
@@ -393,6 +411,77 @@ app.get('/api/videos/:videoId', validateApiKey, async (req, res) => {
     res.status(error.response?.status || 500).json({
       error: 'Failed to get video details',
       details: error.response?.data?.message || error.message
+    });
+  }
+});
+
+// Field59 video creation endpoint
+app.post('/api/field59/videos', validateField59Credentials, async (req, res) => {
+  try {
+    const { url, title, summary, tags } = req.body;
+    
+    if (!url || !title) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        details: 'Video must have a URL and title'
+      });
+    }
+    
+    console.log('Creating Field59 video with URL:', url);
+    
+    // Create XML payload
+    const tagsXml = tags && tags.length > 0 
+      ? `<tags>${tags.map(tag => `<tag>${tag}</tag>`).join('')}</tags>` 
+      : '<tags></tags>';
+    
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <video>
+        <url>${url}</url>
+        <title>${title}</title>
+        <summary>${summary || ''}</summary>
+        ${tagsXml}
+      </video>`;
+    
+    // Send video metadata as URL-encoded form data
+    const params = new URLSearchParams();
+    params.append('xml', xml);
+    
+    // Encode credentials for Basic Auth
+    const credentials = Buffer.from(`${FIELD59_USERNAME}:${FIELD59_PASSWORD}`).toString('base64');
+    
+    const response = await axios.post(`${FIELD59_BASE_URL}/v2/video/create`, params, {
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+        'Accept': 'application/xml',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      responseType: 'text'
+    });
+    
+    // Parse response XML to get video key using regex
+    const keyMatch = response.data.match(/<key>(.*?)<\/key>/);
+    const key = keyMatch?.[1];
+    
+    if (!key) {
+      throw new Error('Failed to get video key from response');
+    }
+    
+    console.log('Field59 video created successfully with key:', key);
+    
+    res.json({
+      error: null,
+      videoKey: key
+    });
+  } catch (error) {
+    console.error('Error creating Field59 video:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to create Field59 video',
+      details: error.response?.data || error.message
     });
   }
 });
