@@ -140,18 +140,9 @@
   cursor: pointer;
   font-size: 0.9rem;
   text-align: center;
-  /* flex-grow: 1; */
+  flex-grow: 1;
   display: inline-block;
   text-decoration: none;
-}
-
-.create-button {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.create-button:hover {
-  background-color: #2563eb;
 }
 
 .play-button {

@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getEnrichedVideoList, deleteVideo } from '../services/videoDataService';
-import Field59Service from '../services/field59Service';
-import Field59Video from '../models/Field59Video';
 import './VideoList.css';
 import VideoPlayer from './VideoPlayer';
-import { FiDownload } from 'react-icons/fi';
-
 
 const VideoList = () => {
   const [videos, setVideos] = useState([]);
@@ -13,15 +9,6 @@ const VideoList = () => {
   const [error, setError] = useState(null);
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [isCreatingF59Video, setIsCreatingF59Video] = useState(false);
-  const [newF59VideoKey, setNewF59VideoKey] = useState(null);
-  
-  
-  // Initialize Field59 service with credentials from environment variables
-  const field59Service = new Field59Service(
-    import.meta.env.VITE_FIELD59_USERNAME,
-    import.meta.env.VITE_FIELD59_PASSWORD
-  );
   
   const formatDate = (dateString) => {
     const date = typeof dateString === 'number' 
@@ -124,73 +111,6 @@ const VideoList = () => {
     }
   };
   
-  // Add this new function to create a Field59 video
-  const createField59Video = async (videoUrl, title, summary = '', tags = []) => {
-    try {
-      setIsCreatingF59Video(true);
-      setError(null);
-      
-      // Create a Field59Video object
-      const videoData = new Field59Video({
-        url: videoUrl,
-        title: title,
-        summary: summary,
-        tags: tags
-      });
-      
-      // Send to Field59
-      const videoKey = await field59Service.createVideo(videoData);
-      
-      setNewF59VideoKey(videoKey);
-      console.log('Created new Field59 video with key:', videoKey);
-      
-      // Refresh the video list after creating
-      fetchVideos();
-      
-      return videoKey;
-    } catch (err) {
-      console.error('Error creating Field59 video:', err);
-      setError(`Failed to create Field59 video: ${err.message}`);
-      throw err;
-    } finally {
-      setIsCreatingF59Video(false);
-    }
-  };
-  
-  const createBLOXVMSVideo = async (
-    videoUrl = "",
-    videoTitle = "",
-    videoSummary = "",
-    videoTags = ["bloxaigenerated"]
-  ) => {
-    try {
-      const videoKey = await createField59Video(videoUrl, videoTitle, videoSummary, videoTags);
-      
-      alert(`Successfully created Field59 video with key: ${videoKey}`);
-      return videoKey;
-    } catch (err) {
-      alert(`Failed to create video: ${err.message}`);
-      throw err;
-    }
-  };
-
-
-  // Example function to call when you want to create a video
-  const handleCreateExampleVideo = async () => {
-    try {
-      const videoUrl = "https://example.com/sample-video.mp4";
-      const videoTitle = "Sample Video from VideoList";
-      const videoSummary = "This is a sample video created from the VideoList component";
-      const videoTags = ["sample", "test", "field59"];
-      
-      const videoKey = await createField59Video(videoUrl, videoTitle, videoSummary, videoTags);
-      
-      alert(`Successfully created Field59 video with key: ${videoKey}`);
-    } catch (err) {
-      alert(`Failed to create video: ${err.message}`);
-    }
-  };
-  
   const getStatusDisplay = (status) => {
     switch (status) {
       case 'completed':
@@ -273,23 +193,16 @@ const VideoList = () => {
                 }
               }}
             >
-              <FiDownload className="icon download-icon" />Download
+              Download
             </a>
           )}
-          
           <button 
-            className="video-action-button create-button"
-            disabled={isCreatingF59Video || !video.proxied_video_url || !video.title}
-            onClick={() => createBLOXVMSVideo(
-              video.proxied_video_url || video.download_url, 
-              video.title, 
-              video.transcript || ""
-            )}
-            title={!video.proxied_video_url || !video.title ? 
-              "Missing video URL or title required for BLOX VMS" : 
-              "Create video in BLOX VMS"}
+            className="video-action-button delete-button"
+            onClick={() => handleDeleteVideo(video.video_id)}
+            disabled={true}
+            title="Delete functionality disabled for testing"
           >
-            Create BLOX VMS Video
+            Delete
           </button>
         </div>
       );
@@ -329,48 +242,6 @@ const VideoList = () => {
     const lastChar = videoId.charCodeAt(videoId.length - 1) || 0;
     return colors[lastChar % colors.length];
   };
-
-  // Add a control for creating Field59 videos
-  const renderField59Controls = () => {
-    return (
-      <div className="field59-controls" style={{ 
-        marginBottom: '20px', 
-        padding: '15px', 
-        backgroundColor: '#f0f9ff', 
-        borderRadius: '8px',
-        border: '1px solid #bae6fd'
-      }}>
-        <h3 style={{ marginTop: 0 }}>Field59 Video Creation</h3>
-        <button 
-          className="create-video-button"
-          onClick={handleCreateExampleVideo}
-          disabled={isCreatingF59Video}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: isCreatingF59Video ? '#94a3b8' : '#0284c7',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: isCreatingF59Video ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {isCreatingF59Video ? 'Creating...' : 'Create Sample Field59 Video'}
-        </button>
-        
-        {newF59VideoKey && (
-          <div className="success-message" style={{ 
-            marginTop: '10px', 
-            padding: '8px', 
-            backgroundColor: '#dcfce7', 
-            color: '#166534',
-            borderRadius: '4px'
-          }}>
-            Created new video with key: {newF59VideoKey}
-          </div>
-        )}
-      </div>
-    );
-  };
   
   if (loading && !loadingMore) {
     return (
@@ -390,9 +261,6 @@ const VideoList = () => {
         <div className="error-message">{error}</div>
       )}
       
-      {/* Add the Field59 controls here */}
-      {/* {renderField59Controls()} */}
-      
       {videos.length === 0 ? (
         <div className="no-videos-message">
           <p>You don't have any videos yet.</p>
@@ -400,12 +268,7 @@ const VideoList = () => {
         </div>
       ) : (
         <>
-          <div className="video-list" style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(5, 1fr)', 
-            gap: '16px',
-            width: '100%' 
-          }}>
+          <div className="video-list">
             {videos.map((video) => {
               const videoKey = video.video_id || `video-${Math.random().toString(36).substr(2, 9)}`;
               
@@ -414,7 +277,7 @@ const VideoList = () => {
                   key={videoKey}
                   className="video-item" 
                   style={{ 
-                    background: video._hasValidThumbnail ? '#162033' : '#162033' 
+                    background: video._hasValidThumbnail ? '#162033' : `#162033` 
                   }}
                 >
                   <div className="video-preview">
