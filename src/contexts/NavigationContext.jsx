@@ -80,7 +80,7 @@ export const NavigationProvider = ({ children }) => {
       return;
     }
 
-    console.log(`NavigationContext: Navigating to ${tabName}`);
+    //console.log(`NavigationContext: Navigating to ${tabName}`);
     setActiveTab(tabName);
 
     // Update active step if it's a workflow step
@@ -211,7 +211,7 @@ export const NavigationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    console.log('Nav buttons:', document.querySelectorAll('.nav-tab').length);
+    //console.log('Nav buttons:', document.querySelectorAll('.nav-tab').length);
     document.querySelectorAll('.nav-tab').forEach(btn => {
       console.log(btn.id, btn.innerText, window.getComputedStyle(btn).display);
     });
@@ -227,7 +227,7 @@ export const NavigationProvider = ({ children }) => {
 // Custom hook for using navigation
 export const useNavigation = () => {
   const context = useContext(NavigationContext);
-  console.log('Navigation context requested, value:', context);
+ // console.log('Navigation context requested, value:', context);
   if (!context) {
     throw new Error('useNavigation must be used within a NavigationProvider');
   }

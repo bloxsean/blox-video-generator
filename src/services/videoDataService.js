@@ -29,11 +29,11 @@ const heygenClient = axios.create({
  */
 export const getEnrichedVideoList = async (token = null) => {
   try {
-    console.log('videoDataService: Starting direct HeyGen API video list fetch...');
+   // console.log('videoDataService: Starting direct HeyGen API video list fetch...');
     
     // Step 1: Get the basic list of videos
     const basicVideoList = await fetchVideoListFromHeyGen(token);
-    console.log(`videoDataService: Fetched ${basicVideoList.videos.length} videos from HeyGen API`);
+    //console.log(`videoDataService: Fetched ${basicVideoList.videos.length} videos from HeyGen API`);
     
     // Step 2: Enhance completed videos with additional details
     const enhancedVideos = await enrichVideosWithDetails(basicVideoList.videos);
@@ -57,7 +57,7 @@ export const getEnrichedVideoList = async (token = null) => {
 const fetchVideoListFromHeyGen = async (token = null) => {
   try {
     const params = token ? { token } : {};
-    console.log('videoDataService: Fetching basic video list from HeyGen...');
+    //console.log('videoDataService: Fetching basic video list from HeyGen...');
     
     // Call HeyGen's video.list endpoint
     const response = await heygenClient.get('/video.list', { params });
@@ -67,7 +67,7 @@ const fetchVideoListFromHeyGen = async (token = null) => {
       throw new Error('Unexpected response format from HeyGen API video.list');
     }
     
-    console.log(`videoDataService: Received ${response.data.data.videos.length} videos from HeyGen`);
+    //console.log(`videoDataService: Received ${response.data.data.videos.length} videos from HeyGen`);
     
     // Return standardized format
     return {
@@ -113,14 +113,14 @@ const normalizeBasicVideoData = (video) => {
  * @returns {Promise<Array<Object>>} - Enhanced video objects
  */
 const enrichVideosWithDetails = async (videos) => {
-  console.log(`videoDataService: Enhancing ${videos.length} videos with detailed information...`);
+  //console.log(`videoDataService: Enhancing ${videos.length} videos with detailed information...`);
   
   // Process videos in parallel with Promise.all
   const enhancedVideosPromises = videos.map(async (video) => {
     // Only completed videos need enhancement to get media URLs
     if (video.status === 'completed') {
       try {
-        console.log(`videoDataService: Fetching details for completed video ${video.video_id}...`);
+        //console.log(`videoDataService: Fetching details for completed video ${video.video_id}...`);
         
         // Get detailed video information
         const detailedVideo = await fetchVideoDetailsFromHeyGen(video.video_id);
@@ -156,7 +156,7 @@ const enrichVideosWithDetails = async (videos) => {
   
   // Wait for all enhancement operations to complete
   const enhancedVideos = await Promise.all(enhancedVideosPromises);
-  console.log(`videoDataService: Enhancement complete: ${enhancedVideos.filter(v => v._enriched).length} videos enriched`);
+  //console.log(`videoDataService: Enhancement complete: ${enhancedVideos.filter(v => v._enriched).length} videos enriched`);
   
   return enhancedVideos;
 };
@@ -168,7 +168,7 @@ const enrichVideosWithDetails = async (videos) => {
  */
 const fetchVideoDetailsFromHeyGen = async (videoId) => {
   try {
-    console.log(`videoDataService: Calling HeyGen API for video ${videoId} details...`);
+    //console.log(`videoDataService: Calling HeyGen API for video ${videoId} details...`);
     
     // Call HeyGen's video_status.get endpoint
     const response = await heygenClient.get('/video_status.get', { 
@@ -181,21 +181,21 @@ const fetchVideoDetailsFromHeyGen = async (videoId) => {
     }
     
     const detailData = response.data.data;
-    console.log(`videoDataService: Successfully received details for video ${videoId}`);
-    console.log('videoDataService: Video URL found:', detailData.video_url);
+    //console.log(`videoDataService: Successfully received details for video ${videoId}`);
+    //console.log('videoDataService: Video URL found:', detailData.video_url);
     
     // Log detailed information about the video for debugging
-    console.log('videoDataService: Full video details:', JSON.stringify({
-      video_id: detailData.video_id,
-      status: detailData.status,
-      has_video_url: !!detailData.video_url,
-      has_thumbnail: !!detailData.thumbnail_url,
-      has_audio: detailData.has_audio || 'unknown', // Check if API provides this
-      audio_info: detailData.audio_info || 'not provided', // Check if API provides this
-      format: detailData.format || 'unknown',
-      duration: detailData.duration || 'unknown',
-      resolution: detailData.resolution || 'unknown'
-    }, null, 2));
+    // console.log('videoDataService: Full video details:', JSON.stringify({
+    //   video_id: detailData.video_id,
+    //   status: detailData.status,
+    //   has_video_url: !!detailData.video_url,
+    //   has_thumbnail: !!detailData.thumbnail_url,
+    //   has_audio: detailData.has_audio || 'unknown', // Check if API provides this
+    //   audio_info: detailData.audio_info || 'not provided', // Check if API provides this
+    //   format: detailData.format || 'unknown',
+    //   duration: detailData.duration || 'unknown',
+    //   resolution: detailData.resolution || 'unknown'
+    // }, null, 2));
     
     // Return normalized detailed data with enhanced video URL handling
     return {

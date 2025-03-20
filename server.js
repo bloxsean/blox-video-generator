@@ -5,11 +5,26 @@ import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import path from 'path';
+import xml2js from 'xml2js';
+import { promisify } from 'util';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-dotenv.config();
+// Load environment variables
+const result = dotenv.config();
+
+if (result.error) {
+  console.error('Error loading .env file:', result.error);
+  process.exit(1);
+}
+
+// Log environment configuration (remove sensitive data in production)
+console.log('Environment Configuration:', {
+  PORT: process.env.PORT,
+  FIELD59_USERNAME_SET: !!process.env.FIELD59_USERNAME,
+  FIELD59_PASSWORD_SET: !!process.env.FIELD59_PASSWORD
+});
 
 const app = express();
 
@@ -20,14 +35,14 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // allow all needed methods
   origin: 'http://localhost:5173',
   credentials: true,
-  allowedHeaders: ['Content-Type', 'X-Api-Key', 'Accept']
+  allowedHeaders: ['Content-Type', 'X-Api-Key', 'Accept', 'Authorization']
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
 const PORT = process.env.PORT || 3001;
-const HEYGEN_API_KEY = 'MmEwZTk5YzIxMmEyNDgxOWFkNjdhNzY2YmZlNGUwZGEtMTc0MTE4Mzk5Ng==';
+const HEYGEN_API_KEY = process.env.HEYGEN_API_KEY;
 const API_BASE_URL_V2 = 'https://api.heygen.com/v2';
 const API_BASE_URL_V1 = 'https://api.heygen.com/v1';
 
@@ -194,123 +209,273 @@ app.get('/api/avatars', validateApiKey, async (req, res) => {
   }
 });
 
-// Video generation endpoints
-// Generate a video
-// app.post('/api/generate-video', validateApiKey, async (req, res) => {
+// Field59 API endpoint
+// app.post('/api/field59/upload', async (req, res) => {
+//   console.log('Field59 Upload Request:', {
+//     url: req.body.url,
+//     title: req.body.title
+//   });
+
 //   try {
-//     console.log('Starting video generation with data:', JSON.stringify(req.body, null, 2));
+//     const { url, title } = req.body;
+//     const username = process.env.FIELD59_USERNAME;
+//     const password = process.env.FIELD59_PASSWORD;
     
-//     // Validate required fields
-//     const { video_inputs } = req.body;
+//     // Debug logging for authentication
+//     console.log('Field59 auth check:', {
+//       usernameSet: !!username,
+//       passwordSet: !!password
+//     });
     
-//     if (!video_inputs?.[0]?.character?.avatar_id) {
+//     // Validate inputs
+//     if (!url) {
 //       return res.status(400).json({
-//         error: 'Invalid data format',
-//         details: 'The character object must have an avatar_id property'
+//         error: 'Missing required parameters',
+//         details: 'URL is required'
 //       });
 //     }
     
-//     if (!video_inputs?.[0]?.voice?.voice_id) {
-//       return res.status(400).json({
-//         error: 'Invalid data format',
-//         details: 'The voice object must have a voice_id property'
+//     if (!username || !password) {
+//       return res.status(500).json({
+//         error: 'Configuration error',
+//         details: 'Field59 credentials not configured'
 //       });
 //     }
     
-//     // Prepare the HeyGen API payload
-//     const payload = {
-//       video_inputs: [
-//         {
-//           character: {
-//             type: "avatar",
-//             avatar_id: avatar.avatar_id,
-//             scale: 1.0
-//           },
-//           voice: {
-//             type: "text",
-//             voice_id: voice.voice_id,
-//             input_text: script
-//           },
-//           background: {
-//             type: "color",
-//             value: settings?.backgroundColor || "#f6f6fc"
-//           }
-//         }
-//       ],
-//       title: settings?.title || "Generated Video",
-//       dimension: {
-//         width: 1920,
-//         height: 1080
-//       }
+//     // Create the XML payload with URL-encoded URL inside CDATA
+//     const fileName = url.split('/').pop()?.split('?')[0] || '';
+//     const videoTitle = title || fileName.replace(/\.[^/.]+$/, '');
+//     const xml = `<?xml version="1.0" encoding="UTF-8"?>
+// <video>
+//   <title><![CDATA[${videoTitle}]]></title>
+//   <url><![CDATA[${url}]]></url>
+// </video>`;
+
+//     console.log('Prepared XML payload:', xml);
+
+//     // Format params and auth correctly
+//     const params = new URLSearchParams();
+//     params.append('xml', xml);
+    
+//     // Log full debug info (sanitized)
+//     console.log('Field59 Request Debug:', {
+//       username_length: username.trim().length,
+//       password_length: password.trim().length,
+//       xml_length: xml.length,
+//       url: 'https://api.field59.com/v2/video/create'
+//     });
+
+//     // Try a different auth header encoding approach
+//     const authString = username.trim() + ':' + password.trim();
+//     const authBuf = Buffer.from(authString, 'utf8');
+//     const base64Auth = authBuf.toString('base64');
+    
+//     // Ensure XML is properly encoded
+//     const xmlParam = encodeURIComponent(xml);
+//     const requestBody = `xml=${xmlParam}`;
+
+//     // First make an unauthenticated request to get the auth challenge
+//     const initialResponse = await axios({
+//       method: 'post',
+//       url: 'https://api.field59.com/v2/video/create',
+//       validateStatus: null
+//     });
+
+//     // Get realm from WWW-Authenticate header
+//     const authHeader = initialResponse.headers['www-authenticate'];
+//     const realm = authHeader ? authHeader.match(/realm="([^"]+)"/) : null;
+//     const realmString = realm ? realm[1] : 'api.field59.com';
+
+//     // Create properly formatted auth header with realm
+//     const headers = {
+//       'Authorization': `${username}:${password}#`,
+//       'Content-Type': 'application/x-www-form-urlencoded',
+//       'Content-Length': Buffer.byteLength(requestBody),
+//       'Accept': 'application/xml',
+//       'Host': 'api.field59.com'
 //     };
-      // Generate a video
-app.post('/api/generate-video', validateApiKey, async (req, res) => {
+
+//     console.log('Using auth challenge info:', {
+//       realm: realmString,
+//       authHeaderPresent: !!authHeader,
+//       headerLength: headers['Authorization'].length
+//     });
+
+//     // Make authenticated request
+//     const field59Response = await axios({
+//       method: 'post',
+//       url: 'https://api.field59.com/v2/video/create',
+//       data: requestBody,
+//       headers: headers,
+//       auth: {
+//         username: username.trim(),
+//         password: password.trim()
+//       },
+//       // Capture exact request/response data
+//       transformRequest: [(data) => {
+//         console.log('Raw request body:', data);
+//         console.log('Request headers:', headers);
+//         return data;
+//       }],
+//       transformResponse: [(data) => {
+//         console.log('Raw response:', {
+//           data: data?.substring(0, 200),
+//           type: typeof data,
+//           length: data?.length
+//         });
+//         return data;
+//       }],
+//       responseType: 'text',
+//       validateStatus: null,
+//       maxRedirects: 0
+//     });
+
+//     // Log the exact request details
+//     console.log('Field59 Request:', {
+//       url: 'https://api.field59.com/v2/video/create',
+//       method: 'POST',
+//       bodyLength: requestBody.length,
+//       xmlLength: xml.length,
+//       encodedXmlLength: xmlParam.length
+//     });
+
+//     // Log full response details
+//     console.log('Field59 Response:', {
+//       status: field59Response.status,
+//       statusText: field59Response.statusText,
+//       headers: field59Response.headers,
+//       auth_header: field59Response.headers['www-authenticate'],
+//       data_length: field59Response.data?.length || 0,
+//       response_type: typeof field59Response.data,
+//       data_preview: field59Response.data ? field59Response.data.substring(0, 100) : null
+//     });
+
+//     // Handle auth failure with more detail
+//     if (field59Response.status === 401) {
+//       const authHeader = field59Response.headers['www-authenticate'];
+//       const errorDetail = field59Response.data || 'No additional error details provided';
+//       throw new Error(`Authentication failed (${authHeader}) - ${errorDetail}`);
+//     }
+
+//     console.log('Field59 API Response:', {
+//       status: field59Response.status,
+//       headers: field59Response.headers,
+//       data: field59Response.data
+//     });
+
+//     // Parse XML response
+//     const parseXml = promisify(xml2js.parseString);
+//     const result = await parseXml(field59Response.data);
+//     const key = result?.video?.key?.[0];
+
+//     if (!key) {
+//       console.error('No key found in parsed response:', result);
+//       return res.status(500).json({
+//         error: 'Invalid response',
+//         details: 'No video key in Field59 response'
+//       });
+//     }
+
+//     // Return JSON response
+//     res.json({
+//       error: null,
+//       key,
+//       message: 'Video uploaded successfully'
+//     });
+    
+//   } catch (error) {
+//     console.error('Error in Field59 upload:', {
+//       message: error.message,
+//       response: {
+//         status: error.response?.status,
+//         statusText: error.response?.statusText,
+//         data: error.response?.data,
+//         headers: error.response?.headers
+//       }
+//     });
+    
+//     res.status(error.response?.status || 500).json({
+//       error: 'Failed to upload video to Field59',
+//       details: error.response?.data || error.message,
+//       timestamp: new Date().toISOString()
+//     });
+//   }
+// });
+
+function generateVideoXML(title, url) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<video>
+  <title><![CDATA[${title}]]></title>
+  <url><![CDATA[${encodeURIComponent(url)}]]></url>
+</video>`;
+}
+
+
+// This function will run immediately when the file is loaded
+// const checkField59Status = async () => {
+//   console.log('Checking Field59 status...');
+//   try {
+//     const response = await axios.get('https://api.field59.com/v2/video/status/80917ce2b7ea3e39407cbffdb94ca4786f0b5af9', {
+//       headers: {
+//         'Authorization': process.env.FIELD59_USERNAME + ':' + process.env.FIELD59_PASSWORD
+//       }
+//     });
+    
+//     if (response.data.key) {
+//       console.log('Worked successful:', response.data);
+//       // Handle success - perhaps save to database or take some action
+//       return response.data; // Return data in case you need it elsewhere
+//     }
+//   } catch (error) {
+//     console.error('Failed:', error.response?.data || error);
+//     // Handle error - perhaps send notification or log to monitoring system
+//   }
+//   console.log('Field59 status check completed.');
+// };
+
+// // Execute the function immediately when this file is loaded
+// checkField59Status();
+
+
+
+
+
+
+// Route to upload video to Field59 (v2)
+app.post('/api/field59/upload', async (req, res) => {
   try {
-    console.log('Starting video generation with data:', JSON.stringify(req.body, null, 2));
+    // Extract title and URL from the request body
+    const { title, url } = req.body;
 
     // Validate required fields
-    const { video_inputs } = req.body;
-
-    if (!video_inputs?.[0]?.character?.avatar_id) {
-      return res.status(400).json({
-        error: 'Invalid data format',
-        details: 'The character object must have an avatar_id property'
-      });
+    if (!title || !url) {
+      return res.status(400).json({ error: 'Title and URL are required.' });
     }
 
-    if (!video_inputs?.[0]?.voice?.voice_id) {
-      return res.status(400).json({
-        error: 'Invalid data format',
-        details: 'The voice object must have a voice_id property'
-      });
-    }
+    // Generate XML payload
+    const xmlPayload = generateVideoXML(title, url);
 
-    // Use the provided payload directly since it already matches HeyGen's format
-    const payload = req.body;
+    // Create Basic Authentication header
+    const authHeader = `Basic ${Buffer.from(`${FIELD59_USERNAME}:${FIELD59_PASSWORD}`).toString('base64')}`;
 
-    console.log('Sending payload to HeyGen API:', JSON.stringify(payload, null, 2));
-    
-    const response = await axios.post(`${API_BASE_URL_V2}/video/generate`, payload, {
+    // Field59 v2 API endpoint
+    const apiUrl = 'https://api.field59.com/v2/video/create';
+
+    // Send POST request to Field59
+    const field59Response = await axios.post(apiUrl, `xml=${xmlPayload}`, {
       headers: {
-        'X-Api-Key': HEYGEN_API_KEY,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
+        'Authorization': authHeader,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
-    
-    console.log('HeyGen API response:', response.data);
-    
-    if (!response.data?.data?.video_id) {
-      console.error('Invalid HeyGen API response - missing video_id:', response.data);
-      return res.status(500).json({
-        error: 'Invalid API response',
-        details: 'Missing video_id in API response'
-      });
-    }
-    
-    res.json({
-      error: null,
-      video_id: response.data.data.video_id
-    });
-    
+
+    // Respond with the Field59 API response
+    res.status(201).json({ message: 'Video created successfully.', data: field59Response.data });
   } catch (error) {
-    console.error('Error generating video:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
-    
-    res.status(error.response?.status || 500).json({
-      error: 'Failed to generate video',
-      details: error.response?.data?.message || error.message,
-      timestamp: new Date().toISOString()
-    });
+    console.error('Error uploading to Field59:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to upload video.', details: error.response?.data || error.message });
   }
 });
-
-//from gemini
-
-
 
 // Check video status
 app.get('/api/videos/:videoId/status', validateApiKey, async (req, res) => {
@@ -397,58 +562,117 @@ app.get('/api/videos/:videoId', validateApiKey, async (req, res) => {
   }
 });
 
-// Field59 API proxy endpoints
-app.post('/api/field59/upload', validateApiKey, async (req, res) => {
+// Add this new test proxy function endpoint with Field59 API integration
+app.post('/api/test-proxy', async (req, res) => {
   try {
-    const { url, title, username, password } = req.body;
+    // Get the title and video URL from the request
+    const { title, videoUrl } = req.body;
     
-    if (!url || !username || !password) {
-      return res.status(400).json({
-        error: 'Missing required parameters',
-        details: 'URL, username and password are required'
+    // Construct the XML with CDATA sections
+    const xmlData = `<?xml version="1.0" encoding="UTF-8"?>
+<video>
+<title><![CDATA[${title}]]></title>
+<url><![CDATA[${encodeURIComponent(videoUrl)}]]></url>
+</video>`;
+    
+    // Set up authentication credentials
+    const username = process.env.FIELD59_USERNAME;
+    const password = process.env.FIELD59_PASSWORD;
+    
+    // Create base64 encoded auth string
+    const auth = ` "${username}:${password}"`;
+    
+    // Make the request to Field59 API
+    const response = await axios({
+      method: 'post',
+      url: 'https://api.field59.com/v2/video/create',
+      headers: {
+        'Content-Type': 'application/xml',
+        'Authorization': auth,
+        'Accept': 'text/xml',
+        'Expect': '100-continue'
+      },
+      data: xmlData
+    });
+    
+    // Return the response to the client
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error in proxy:', error);
+    
+    // Forward the error response
+    if (error.response) {
+      res.status(error.response.status).json({
+        error: 'API Error',
+        details: error.response.data
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Proxy server error',
+        message: error.message
       });
     }
-    
-    // Create the XML payload
-    const fileName = url.split('/').pop()?.split('?')[0] || '';
-    const videoTitle = title || fileName.replace(/\.[^/.]+$/, '');
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<video>
-  <title><![CDATA[${videoTitle}]]></title>
-  <url><![CDATA[${url}]]></url>
-</video>`;
-
-    // Send to Field59
-    const params = new URLSearchParams();
-    params.append('xml', xml);
-
-    const credentials = Buffer.from(`${username}:${password}`).toString('base64');
-    
-    const response = await axios.post('https://api.field59.com/v2/video/create', params, {
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Accept': 'application/xml',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      responseType: 'text'
-    });
-    
-    // Return the response
-    res.setHeader('Content-Type', 'application/xml');
-    res.send(response.data);
-    
-  } catch (error) {
-    console.error('Error uploading to Field59:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
-    
-    res.status(error.response?.status || 500).json({
-      error: 'Failed to upload video to Field59',
-      details: error.response?.data || error.message
-    });
   }
+  // const video = req.body;
+  
+  // console.log('==== TEST PROXY FUNCTION CALLED ====');
+  // //console.log('Received video object:', JSON.stringify(video, null, 2));
+  
+  // try {
+  //   // Extract a key/ID from the video object to use as FILE KEY
+  //   // You can use video_id or another identifier from your video object
+  //   const fileKey = '80917ce2b7ea3e39407cbffdb94ca4786f0b5af9';//video.video_id || 'default-key';
+    
+  //   // Field59 credentials from environment variables
+  //   const username = process.env.FIELD59_USERNAME;
+  //   const password = process.env.FIELD59_PASSWORD;
+    
+  //   if (!username || !password) {
+  //     throw new Error('Field59 credentials not configured');
+  //   }
+    
+  //   console.log(`Making POST request to /v2/video/${fileKey}`);
+    
+  //   // Create Basic Auth header (equivalent to PHP curl CURLOPT_USERPWD)
+  //   const auth = `${username}:${password}`;
+    
+  //   // Prepare the form data (equivalent to PHP curl CURLOPT_POSTFIELDS)
+  //   const formData = new URLSearchParams();
+  //   formData.append('title', video.title || 'Updated title');
+  //   formData.append('description', video.description || 'Updated via proxy test');
+    
+  //   // Make POST request to the Field59 API
+  //   const field59Response = await axios.post(`https://api.field59.com/v2/video/${fileKey}`, formData, {
+  //     headers: {
+  //       'Authorization': `Basic ${auth}`,
+  //       'Content-Type': 'application/x-www-form-urlencoded'
+  //     }
+  //   });
+    
+  //   console.log('Field59 API Response:', field59Response.data);
+  //   console.log('Proxy test function worked as expected!');
+    
+  //   // Send response back to client
+  //   res.json({
+  //     success: true,
+  //     message: 'Proxy test function executed successfully with Field59 API call',
+  //     videoId: video.video_id,
+  //     fileKey: fileKey,
+  //     field59Response: field59Response.data,
+  //     timestamp: new Date().toISOString()
+  //   });
+  // } catch (error) {
+  //   console.error('Proxy test error:', error.message);
+  //   console.error('Response data:', error.response?.data);
+    
+  //   res.status(500).json({
+  //     success: false,
+  //     message: 'Proxy test function failed',
+  //     error: error.message,
+  //     details: error.response?.data,
+  //     timestamp: new Date().toISOString()
+  //   });
+  // }
 });
 
 // Global error handler

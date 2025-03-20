@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './Home.css';
 import { useNavigation } from '../contexts/NavigationContext';
 import { FiVideo, FiMic, FiUser, FiCpu, FiGlobe, FiDownload } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
+
 const Home = () => {
   const { navigateToTab } = useNavigation();
+
+  useEffect(() => {
+    console.log('Home component loaded');
+
+  }, []);
 
   const features = [
     {

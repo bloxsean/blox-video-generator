@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getEnrichedVideoList, deleteVideo } from '../services/videoDataService';
+import { uploadVideoToField59 } from '../services/field59UploadService';  
 import './VideoList.css';
 import VideoPlayer from './VideoPlayer';
+import axios from 'axios';
 
 const VideoList = () => {
   const [videos, setVideos] = useState([]);
@@ -9,6 +11,7 @@ const VideoList = () => {
   const [error, setError] = useState(null);
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState({});
   
   const formatDate = (dateString) => {
     const date = typeof dateString === 'number' 
@@ -52,18 +55,18 @@ const VideoList = () => {
       }
       
       setError(null);
-      console.log(`VideoList: Fetching videos with token: ${token || 'NONE'}`);
+      //console.log(`VideoList: Fetching videos with token: ${token || 'NONE'}`);
       
       const response = await getEnrichedVideoList(token);
       
-      console.log('VideoList: Received enriched videos response:', {
-        videosCount: response.videos.length,
-        hasToken: !!response.token
-      });
+      //console.log('VideoList: Received enriched videos response:', {
+      //  videosCount: response.videos.length,
+      //  hasToken: !!response.token
+      //});
       
       if (response && response.videos) {
         const videosData = response.videos;
-        console.log(`VideoList: Processing ${videosData.length} enriched videos`);
+        //console.log(`VideoList: Processing ${videosData.length} enriched videos`);
         
         const displayVideos = videosData.map(video => ({
           ...video,
@@ -127,12 +130,12 @@ const VideoList = () => {
   };
   
   const getVideoPreview = (video) => {
-    console.log(`VideoList: Preview for video ${video.video_id}:`, {
-      status: video.status,
-      thumbnail: video.thumbnail_url || 'NONE',
-      video_url: video.proxied_video_url || 'NONE',
-      enriched: video._enriched || false
-    });
+    // console.log(`VideoList: Preview for video ${video.video_id}:`, {
+    //   status: video.status,
+    //   thumbnail: video.thumbnail_url || 'NONE',
+    //   video_url: video.proxied_video_url || 'NONE',
+    //   enriched: video._enriched || false
+    // });
     
     if (video.status === 'completed') {
       return (
@@ -172,6 +175,167 @@ const VideoList = () => {
     );
   };
   
+
+  const handleField59Upload = async (video) => {
+ 
+    console.log('handleField59Upload:', video);
+
+    try {
+      // Create the video with URL
+     // const fileName = url.split('/').pop()?.split('?')[0] || '';
+     // const title = fileName.replace(/\.[^/.]+$/, ''); // Remove file extension
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <video>
+        <title><![CDATA[${video.title}]]></title>
+        <url><![CDATA[${video.proxied_video_url}]]></url>
+      </video>`;
+
+      console.log('Creating video with URL:', video.proxied_video_url);
+      console.log('XML payload:', xml);
+
+      // Send video metadata as URL-encoded form data
+      const params = new URLSearchParams();
+      params.append('xml', xml);
+
+      const createResponse = await axios.post('/v2/video/create', params, {
+        headers: {
+          'Authorization': `Basic ${btoa(import.meta.env.VITE_FIELD59_USERNAME+ ':' + import.meta.env.VITE_FIELD59_PASSWORD)}`,
+          'Accept': 'application/xml'
+        },
+        responseType: 'text'
+      });
+
+      // Parse response to get video key
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(createResponse.data, 'text/xml');
+      const key = xmlDoc.querySelector('key')?.textContent;
+
+      if (!key) {
+        throw new Error('Failed to get video key from response');
+      }
+
+      console.log('Video created successfully with key:', key);
+      //onUploadComplete?.(key);
+      //setUrl(''); // Clear the input
+    } catch (err) {
+      console.error('Video creation failed:', err);
+     // const errorMessage = err.response?.data?.message || err.message;
+      //setError(errorMessage);
+     // onError?.(errorMessage);
+    } finally {
+      //setCreating(false);
+      console.log('handleField59Upload finally');
+    }
+
+  };
+
+  // const handleField59Upload = async (video) => {
+  //   setUploadStatus(prev => ({
+  //     ...prev,
+  //     [video.video_id]: { status: 'uploading', message: 'Uploading to Field59...' }
+  //   }));
+  //   console.log('handleField59Upload:', video);
+
+  //   // Create the XML payload
+  //   // const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
+  //   // <video>
+  //   //   <title><![CDATA[${video.title}]]></title>
+  //   //   <url><![CDATA[${encodeURIComponent(video.proxied_video_url)}]]></url>
+  //   // </video>`;
+
+  //   try {
+
+  //     const response = await axios.post('/api/field59/upload', {
+  //       url: video.proxied_video_url,
+  //       title: video.title
+  //     }, {
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       }
+  //     });
+      
+  //     if (!response.data?.key) {
+  //       throw new Error('Failed to get video ID from response');
+  //     }
+
+  //     // Send as plain text instead of URLSearchParams
+  //     // const response = await axios.post('/api/field59/upload', xmlPayload, {
+  //     //   headers: {
+  //     //     'Content-Type': 'text/xml',  // Changed content type to XML
+  //     //     'Accept': 'application/xml'
+  //     //   }
+  //     // });
+      
+  //     // Parse the XML response
+  //     // const parser = new DOMParser();
+  //     // const xmlDoc = parser.parseFromString(response.data, "text/xml");
+      
+  //     // // Check for both id and key elements
+  //     // const key = xmlDoc.querySelector("id")?.textContent || 
+  //     //             xmlDoc.querySelector("key")?.textContent;
+      
+  //     // if (!key) {
+  //     //   throw new Error('Failed to get video ID from XML response');
+  //     // }
+      
+  //     // setUploadStatus(prev => ({
+  //     //   ...prev,
+  //     //   [video.video_id]: { 
+  //     //     status: 'success', 
+  //     //     message: `Successfully uploaded to Field59 with ID: ${key}`,
+  //     //     videoKey: key
+  //     //   }
+  //     // }));
+  //   } catch (error) {
+  //     console.error('Field59 upload failed:', error);
+  //     // Enhanced error reporting
+  //     const errorMessage = error.response?.data 
+  //       ? `Server error: ${error.response.data}` 
+  //       : error.message || 'Unknown error';
+      
+  //     setUploadStatus(prev => ({
+  //       ...prev,
+  //       [video.video_id]: { 
+  //         status: 'error', 
+  //         message: `Upload failed: ${errorMessage}`
+  //       }
+  //     }));
+  //   }
+  // };
+  
+  const handleTestProxy = async (video) => {
+    console.log('Testing proxy function with video:', video);
+    
+    try {
+      const response = await axios.post('http://localhost:300/api/videos', video, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Proxy test response:', response.data);
+      
+      // Show success message in the upload status
+      setUploadStatus(prev => ({
+        ...prev,
+        [video.video_id]: { 
+          status: 'success', 
+          message: `Proxy test successful: ${response.data.message}`
+        }
+      }));
+    } catch (error) {
+      console.error('Proxy test failed:', error);
+      
+      setUploadStatus(prev => ({
+        ...prev,
+        [video.video_id]: { 
+          status: 'error', 
+          message: `Proxy test failed: ${error.message}`
+        }
+      }));
+    }
+  };
+  
   const getActionButtons = (video) => {
     if (video.status === 'completed') {
       return (
@@ -196,14 +360,23 @@ const VideoList = () => {
               Download
             </a>
           )}
-          <button 
+          {/* <button 
+            className="video-action-button field59-button"
+            onClick={() => handleField59Upload(video)}
+            disabled={uploadStatus[video.video_id]?.status === 'uploading'}
+          >
+            {uploadStatus[video.video_id]?.status === 'uploading' 
+              ? 'Uploading...' 
+              : 'Upload to Field59'}
+          </button>          */}
+          {/* <button 
             className="video-action-button delete-button"
             onClick={() => handleDeleteVideo(video.video_id)}
             disabled={true}
             title="Delete functionality disabled for testing"
           >
             Delete
-          </button>
+          </button> */}
         </div>
       );
     } else {
@@ -324,6 +497,25 @@ const VideoList = () => {
           )}
         </>
       )}
+      
+      {Object.entries(uploadStatus).map(([videoId, status]) => (
+        status.message && (
+          <div 
+            key={`status-${videoId}`}
+            className={`upload-status-message ${status.status}`}
+          >
+            {status.message}
+            <button 
+              onClick={() => setUploadStatus(prev => ({
+                ...prev, 
+                [videoId]: { ...prev[videoId], message: null }
+              }))}
+            >
+              ×
+            </button>
+          </div>
+        )
+      ))}
     </div>
   );
 };

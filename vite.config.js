@@ -6,6 +6,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      '/v2/video/': {
+        target: 'https://api.field59.com',
+        changeOrigin: true,
+        secure: true
+      },
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
