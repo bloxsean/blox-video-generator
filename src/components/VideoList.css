@@ -120,16 +120,23 @@
   gap: 10px;
 }
 
+.video-created-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .video-created {
-  font-size: 0.9rem;
-  color: #cfcece;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .video-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
+  margin-left: 10px;
+  flex-shrink: 0; /* Prevents the actions from shrinking */
 }
 
 .video-action-button {
@@ -460,4 +467,70 @@
   font-size: 18px;
   cursor: pointer;
   margin-left: 10px;
+}
+
+.menu-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-button {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.menu-content {
+  position: absolute;
+  right: 100%; /* Position to the left of the button */
+  top: 0;
+  background-color: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1;
+  display: flex;
+  opacity: 0;
+  transform: translateX(10px);
+  pointer-events: none;
+  transition: all 0.2s ease-out;
+}
+
+.menu-dropdown:hover .menu-content {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.menu-item {
+  color: #333333;
+  padding: 8px 12px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border-right: 1px solid #eee;
+}
+
+.menu-item:last-child {
+  border-right: none;
+}
+
+.menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+/* Add some spacing between menu and button */
+.menu-dropdown:hover .menu-content {
+  margin-right: 8px;
 } 

@@ -189,8 +189,9 @@
   width: 100%;
 }
 
+
 .avatar-card {
-  flex: 0 0 calc(33.333% - 20px);
+  flex: 0 0 calc(23.333% - 20px);
   max-width: calc(33.333% - 20px);
   background: rgba(30, 41, 59, 0.5);
   border: 1px solid rgba(56, 189, 248, 0.1);

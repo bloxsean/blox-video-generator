@@ -4,6 +4,10 @@ import { uploadVideoToField59 } from '../services/field59UploadService';
 import './VideoList.css';
 import VideoPlayer from './VideoPlayer';
 import axios from 'axios';
+import { MdMoreVert } from "react-icons/md";
+import { FaEllipsisV } from "react-icons/fa";
+import { BsThreeDotsVertical } from "react-icons/bs";
+import { MdDownloadForOffline } from "react-icons/md";
 
 const VideoList = () => {
   const [videos, setVideos] = useState([]);
@@ -340,43 +344,33 @@ const VideoList = () => {
     if (video.status === 'completed') {
       return (
         <div className="video-actions">
-          {video.proxied_video_url && (
-            <a 
-              className="video-action-button download-button"
-              href={video.proxied_video_url}
-              download={`video-${video.video_id}.mp4`}
-              onClick={(e) => {
-                if (!video.proxied_video_url.includes('download=true') && video.download_url) {
-                  e.preventDefault();
-                  const a = document.createElement('a');
-                  a.href = video.download_url;
-                  a.download = `video-${video.video_id}.mp4`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                }
-              }}
-            >
-              Download
-            </a>
-          )}
-          {/* <button 
-            className="video-action-button field59-button"
-            onClick={() => handleField59Upload(video)}
-            disabled={uploadStatus[video.video_id]?.status === 'uploading'}
-          >
-            {uploadStatus[video.video_id]?.status === 'uploading' 
-              ? 'Uploading...' 
-              : 'Upload to Field59'}
-          </button>          */}
-          {/* <button 
-            className="video-action-button delete-button"
-            onClick={() => handleDeleteVideo(video.video_id)}
-            disabled={true}
-            title="Delete functionality disabled for testing"
-          >
-            Delete
-          </button> */}
+          <div className="menu-dropdown">
+            {/* <button className="menu-button">
+              <MdDownloadForOffline size={22} />
+            </button> */}
+           
+              {video.proxied_video_url && (
+                <a 
+                  className="menu-itemx"
+                  href={video.proxied_video_url}
+                  download={`video-${video.video_id}.mp4`}
+                  onClick={(e) => {
+                    if (!video.proxied_video_url.includes('download=true') && video.download_url) {
+                      e.preventDefault();
+                      const a = document.createElement('a');
+                      a.href = video.download_url;
+                      a.download = `video-${video.video_id}.mp4`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }
+                  }}
+                >
+                  <MdDownloadForOffline size={22} />
+                </a>
+              )}
+           
+          </div>
         </div>
       );
     } else {
@@ -472,11 +466,12 @@ const VideoList = () => {
                     </div>
                     
                     <div className="video-meta">
-                      <div className="video-created">
-                        Created: {formatDate(video.created_at)}
+                      <div className="video-created-row">
+                        <div className="video-created">
+                          Created: {formatDate(video.created_at)}
+                        </div>
+                        {getActionButtons(video)}
                       </div>
-                      
-                      {getActionButtons(video)}
                     </div>
                   </div>
                 </div>

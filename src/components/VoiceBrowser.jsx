@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './VoiceBrowser.css';
 import WorkflowStepper from './WorkflowStepper';
@@ -52,6 +52,9 @@ const VoiceBrowser = () => {
   const [dataArray, setDataArray] = useState(null);
   const [animationFrame, setAnimationFrame] = useState(null);
   const [sourceNode, setSourceNode] = useState(null);
+
+  // Add a ref for the voice list container
+  const voiceListRef = useRef(null);
 
   // Helper function to save voices to local storage
   const saveVoicesToLocalStorage = (voicesData) => {
@@ -211,6 +214,23 @@ const VoiceBrowser = () => {
   const handleVoiceSelect = (voice) => {
     console.log('VoiceBrowser: Voice selected:', voice?.name || voice?.voice_name);
     selectVoice(voice);
+    
+    // Use a more reliable smooth scrolling approach
+    setTimeout(() => {
+      const voiceContent = document.querySelector('.voice-content');
+      if (voiceContent) {
+        // Use scrollTo with smooth behavior instead of direct scrollTop assignment
+        voiceContent.scrollTo({ 
+          top: 0, 
+          behavior: 'smooth' 
+        });
+        
+        // Add a class that ensures smooth scrolling is enabled
+        if (!voiceContent.classList.contains('smooth-scroll')) {
+          voiceContent.classList.add('smooth-scroll');
+        }
+      }
+    }, 200); // Slightly longer timeout to ensure everything is ready
   };
 
   // Check if a voice is the currently selected one
@@ -435,7 +455,8 @@ const VoiceBrowser = () => {
       if (!searchTerm) return true;
       
       const voiceName = (voice.voice_name || voice.name || '').toLowerCase();
-      return voiceName.includes(searchTerm.toLowerCase());
+      const voiceGender = (voice.gender || '').toLowerCase();
+      return voiceName.includes(searchTerm.toLowerCase()) || voiceGender.includes(searchTerm.toLowerCase());
     });
 
     if (filteredVoices.length === 0) {
@@ -447,7 +468,7 @@ const VoiceBrowser = () => {
     }
 
     return (
-      <div className="voice-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+      <div className="voice-list" ref={voiceListRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
         {filteredVoices.map((voice, index) => (
           <div 
             key={voice.voice_id || voice.id || `voice-${index}`} 
@@ -710,7 +731,12 @@ const VoiceBrowser = () => {
         )} */}
       </div>
       
-      <div className="voice-content">
+      <div className="voice-content" style={{ 
+        overflowY: 'auto',
+        height: 'calc(100vh - 200px)',
+        maxHeight: '600px',
+        scrollBehavior: 'smooth'
+      }}>
         {renderContent()}
       </div>
     </div>

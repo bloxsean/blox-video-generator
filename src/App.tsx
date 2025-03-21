@@ -23,7 +23,7 @@ function App() {
     { id: 'voices', label: 'Voices', icon: <FiMic /> },
     { id: 'avatars', label: 'Avatars', icon: <FiUser /> },
     { id: 'script', label: 'Script', icon: <FiEdit /> },
-    { id: 'generation', label: 'Generation', icon: <FiCheck /> },
+   // { id: 'generation', label: 'Generation', icon: <FiCheck /> },
     { id: 'videos', label: 'Videos', icon: <FiVideo /> },
   ];
 
