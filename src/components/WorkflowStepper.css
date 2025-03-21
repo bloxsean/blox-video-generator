@@ -1,11 +1,11 @@
 .workflow-stepper {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto 2rem auto;
-  padding: 1.5rem;
+  margin: 32px auto 2rem auto;
+  padding: 2.5rem;
   background-color: rgba(15, 23, 42, 0.6);
-  /* border-radius: 1rem;
-  border: 1px solid rgba(56, 189, 248, 0.1); */
+  border-radius: 1rem;
+  border: 1px solid rgba(56, 189, 248, 0.1);
   backdrop-filter: blur(8px);
 }
 
@@ -56,29 +56,32 @@
 .step {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: left;
   position: relative;
   z-index: 1;
   flex: 1;
+  padding-left: 25px;
+  font-size: smaller;
 }
 
 .step-number {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: rgba(15, 23, 42, 0.6);
+  background-color: rgba(147, 147, 148, 0.6);
   border: 2px solid rgba(56, 189, 248, 0.2);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  margin-top:20px;
   margin-bottom: 0.75rem;
   transition: all 0.3s ease;
 }
 
 .step.completed .step-number {
-  background: #00F58A;
+  background: #38bdf8;
   border-color: transparent;
   color: #0f172a;
 }
@@ -87,20 +90,20 @@
   border-color: #38bdf8;
   color: #ffffff;
   box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
-  background: #F59C00;
+  /* background: #F59C00; */
 }
 
 .step-label {
-  font-size: 1rem;
+  margin-top:12px;
+  font-size: .85rem;
   font-weight: 500;
   color: #64748b;
-  text-align: center;
-  transition: color 0.3s ease;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  transition: color 0.3s ease;  
 }
 
 .step.completed .step-label {
-  color: #38bdf8;
+  color: #ffffff;
   text-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
 }
 
@@ -125,7 +128,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  max-height: 50px;
+  max-height: 38px;
 }
 
 .back-button {

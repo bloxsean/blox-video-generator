@@ -13,35 +13,45 @@ const WORKFLOW_STEPS = [
     label: 'Select Voice',
     description: 'Choose a voice for your video from our library.',
     tabName: 'voices',
-    guidanceMessage: 'Select a voice to continue'
+    guidanceMessage: 'Select a voice to continue',
+    nextStepMessage: 'Nice job! Let’s choose an avatar.',
+    severity: 'info'
   },
   {
     id: 'avatars',
     label: 'Choose Avatar',
     description: 'Pick an avatar that will speak your script.',
     tabName: 'avatars',
-    guidanceMessage: 'Choose an avatar to continue'
+    guidanceMessage: 'Choose an avatar to continue',
+    nextStepMessage: 'Fantastic! Let’s write your sript.',
+    severity: 'info'
   },
   {
     id: 'script',
     label: 'Write Script',
     description: 'Enter the text you want your avatar to speak.',
     tabName: 'script',
-    guidanceMessage: 'Write your script to continue'
+    guidanceMessage: 'Write your script to continue',
+    nextStepMessage: 'Awesome! Time to review your summary.',
+    severity: 'info'
   },
   {
     id: 'summary',
     label: 'Video Summary',
     description: 'Review your video summary before generating the video.',
     tabName: 'summary',
-    guidanceMessage: 'Review your summary and click Generate Video'
+    guidanceMessage: 'Almost there! Review your summary and click Generate Video',
+    nextStepMessage: 'Excellent! it is time to generate the video!',
+    severity: 'info'
   },
   {
     id: 'videos',
     label: 'Generate Video',
     description: 'Review settings and generate your video.',
     tabName: 'videos',
-    guidanceMessage: 'Review your selections and click Generate Video'
+    guidanceMessage: 'Review your selections and click Generate Video',
+    nextStepMessage: 'Great, your video is being generated!',
+    severity: 'info'
   }
 ];
 

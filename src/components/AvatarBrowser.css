@@ -31,10 +31,10 @@
 /* Avatar filter styles */
 .avatar-filters {
   background-color: rgba(30, 41, 59, 0.5);
-  padding: 1rem;
+  /* padding: 1rem; */
   border-radius: 0.75rem;
   margin-bottom: 2rem;
-  border: 1px solid rgba(56, 189, 248, 0.1);
+  /* border: 1px solid rgba(56, 189, 248, 0.1); */
   display: flex;
   align-items: flex-end;
   gap: 1rem;
@@ -218,8 +218,8 @@
 .avatar-card.selected::before {
   content: '✓';
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: 1px;
+  right: 3px;
   width: 24px;
   height: 24px;
   background-color: #38bdf8;

@@ -4,6 +4,7 @@ import './AvatarBrowser.css';
 import WorkflowStepper from './WorkflowStepper';
 import { useNavigation } from '../contexts/NavigationContext';
 import { LinearProgress } from '@mui/material';
+import Skeleton from '@mui/material/Skeleton';
 
 const API_CONFIG = {
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
@@ -282,6 +283,7 @@ const AvatarBrowser = () => {
       return (
         <div className="loading-message">
           <div>Loading avatars...</div>
+          
           <LinearProgress 
             sx={{ 
               width: '100%', 
@@ -327,6 +329,8 @@ const AvatarBrowser = () => {
       );
     }
 
+    
+    
     const filteredAvatars = avatars.filter(avatar => {
       if (!searchTerm) return true;
       return avatar.avatar_name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -435,7 +439,7 @@ const AvatarBrowser = () => {
             />
           </div>
           
-          <div className="filter-actions">
+          {/* <div className="filter-actions">
             <button 
               className="refresh-button"
               onClick={() => {
@@ -446,7 +450,7 @@ const AvatarBrowser = () => {
             >
               Refresh
             </button>
-          </div>
+          </div> */}
         </div>
         
         {/* {selectedAvatar && (

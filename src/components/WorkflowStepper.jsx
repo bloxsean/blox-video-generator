@@ -23,29 +23,52 @@ const WorkflowStepper = ({
     return !steps[activeStep]?.completed;
   };
 
-  // Get guidance message
+
   const getGuidanceMessage = () => {
     const step = steps[activeStep];
     if (!step) return '';
-
+  
+    const nextMessage = activeStep < steps.length - 1 ? 'Click Next to continue' : 'Review and complete';
     
+    // Define the icon based on completion status
+    const alertType = step.completed ? 'success' : 'info'; // Replace with your icon names or logic
+  
     if (step.completed) {
-      return `${step.label} completed! ${activeStep < steps.length - 1 ? 'Click Next to continue' : 'Review and complete'}`;
+      return {
+        message: `${step.nextStepMessage || nextMessage}`,
+        alertType: alertType
+      };
     } else {
-      return step.guidanceMessage || 'Complete this step to continue';
+      return {
+        message: `${step.guidanceMessage || 'Complete this step to continue'}`,
+        alertType: alertType
+      };
     }
   };
+
+  // Get guidance message
+  // const getGuidanceMessage = () => {
+  //   const step = steps[activeStep];
+  //   if (!step) return '';
+
+    
+  //   if (step.completed) {
+  //     return `${step.label} completed! ${activeStep < steps.length - 1 ? 'Click Next to continue' : 'Review and complete'}`;
+  //   } else {
+  //     return step.guidanceMessage || 'Complete this step to continue';
+  //   }
+  // };
 
   return (
     <div className="workflow-stepper">
       {/* Progress bar */}
-      <div className="progress-bar">
+      {/* <div className="progress-bar">        
         <div 
           className="progress-bar-fill" 
-          style={{ width: `${progressPercentage}%` }}
+          style={{ width: `${progressPercentage}%` }} 
         />
       </div>
-      <div className="progress-text">{progressPercentage}% Complete</div>
+      <div className="progress-text">{progressPercentage}% Complete</div> */}
 
       {/* Steps */}
       <div className="stepper">
@@ -75,7 +98,7 @@ const WorkflowStepper = ({
           Back
         </button>
         <div className="test-message">
-          <Alert variant="outlined" severity="info" 
+          <Alert variant="outlined" severity={getGuidanceMessage().alertType} 
             sx={{  
               '& .MuiSvgIcon-root': {
                 fontSize: '24px'  // Adjust the icon size
@@ -85,7 +108,7 @@ const WorkflowStepper = ({
                 fontSize: '16px'
               },
               marginBottom: 2  }}>
-            {getGuidanceMessage()}
+            {getGuidanceMessage().message}
           </Alert>
         </div>
 

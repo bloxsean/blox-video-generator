@@ -489,7 +489,7 @@ const VoiceBrowser = () => {
               <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 600, color: '#e5e7eb' }}>
                 {voice.voice_name || voice.name}
               </h3>
-              
+              {console.log(voice)}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
                 {voice.language && (
                   <div style={{ fontSize: '14px', color: '#9ca3af' }}>
@@ -501,7 +501,7 @@ const VoiceBrowser = () => {
                   <div style={{ fontSize: '14px', color: '#9ca3af' }}>
                     <span style={{ fontWeight: 500, color: '#d1d5db' }}>Gender:</span> {voice.gender}
                   </div>
-                )}
+                )}                
                 
                 <div>
                   {voice.premium ? (

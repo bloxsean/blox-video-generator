@@ -5,11 +5,28 @@
   padding: 20px;
 }
 
+.duration-chip {
+  color: #f8f8f8;
+  /* margin-top: 26px; */
+  position: relative;
+  top: -50px;
+  left: -1px;
+  background-color: black;
+  padding: 5px 13px 5px 13px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
 .video-list-container h2 {
+  /* margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827; */
   margin-bottom: 20px;
   font-size: 24px;
   font-weight: 600;
-  color: #111827;
+  color: #f1f1f3;
+  margin-top: 26px;
 }
 
 .error-message {

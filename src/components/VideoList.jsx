@@ -8,6 +8,8 @@ import { MdMoreVert } from "react-icons/md";
 import { FaEllipsisV } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { MdDownloadForOffline } from "react-icons/md";
+import AvatarCard from './cards/avatarCard';
+import { Grid } from '@mui/material';
 
 const VideoList = () => {
   const [videos, setVideos] = useState([]);
@@ -419,11 +421,70 @@ const VideoList = () => {
     );
   }
   
+  
+  
   return (
+
+
     <div className="video-list-container">
+    
       
       <h2>Your Videos</h2>
       
+      {/* <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 4 }}>
+      {videos.map((video, index) => (
+        <Grid item key={index} xs={12} sm={6} md={2.4}>
+          <AvatarCard video={video} />
+        </Grid>
+      ))}
+    </Grid> */}
+
+{/* <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
+      {videos.map((video, index) => (
+        <Grid
+          item
+          key={index}
+          xs={12}        // 1 card per row on extra-small screens
+          sm={6}        // 2 cards per row on small screens
+          md={4}        // 3 cards per row on medium screens
+          lg={2.4}      // 5 cards per row on large screens (flexible sizing)
+          sx={{
+            display: 'flex',
+            minWidth: 250,     // Minimum card size
+            flexGrow: 1,       // Cards expand to fill space
+          }}
+        >
+          <AvatarCard video={video} />
+        </Grid>
+      ))}
+    </Grid> */}
+
+
+
+
+{/*       
+      <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 4 }}>
+        <Grid item size={6}>
+          <AvatarCard video={videos[0]} />
+        </Grid>
+        <Grid item size={6}>
+          <AvatarCard video={videos[1]} />
+        </Grid>
+        <Grid item size={6}>
+          <AvatarCard video={videos[2]} />
+        </Grid>
+        <Grid item size={6}>
+          <AvatarCard video={videos[3]} />
+        </Grid>
+        <Grid item size={6}>
+          <AvatarCard video={videos[4]} />
+        </Grid>
+        <Grid item size={6}>
+          <AvatarCard video={videos[5]} />
+        </Grid>
+      </Grid>
+       */}
+
       {error && (
         <div className="error-message">{error}</div>
       )}
@@ -440,41 +501,42 @@ const VideoList = () => {
               const videoKey = video.video_id || `video-${Math.random().toString(36).substr(2, 9)}`;
               
               return (
-                <div 
-                  key={videoKey}
-                  className="video-item" 
-                  style={{ 
-                    background: video._hasValidThumbnail ? '#162033' : `#162033` 
-                  }}
-                >
-                  <div className="video-preview">
-                    {getVideoPreview(video)}
-                  </div>
+                <AvatarCard video={video} key={videoKey} />
+                // <div 
+                //   key={videoKey}
+                //   className="video-item" 
+                //   style={{ 
+                //     background: video._hasValidThumbnail ? '#162033' : `#162033` 
+                //   }}
+                // >
+                //   <div className="video-preview">
+                //     {getVideoPreview(video)}
+                //   </div>
                   
-                  <div className="video-details">
-                    <div className="video-title">
-                      {video.title}
-                      {process.env.NODE_ENV !== 'production' && video._enriched && (
-                        <small style={{ display: 'block', fontSize: '8px', color: '#065f46', backgroundColor: '#d1fae5', padding: '2px 4px', borderRadius: '2px', marginTop: '4px', width: 'fit-content' }}>
-                          Enriched
-                        </small>
-                      )}
-                    </div>
+                //   <div className="video-details">
+                //     <div className="video-title">
+                //       {video.title}
+                //       {process.env.NODE_ENV !== 'production' && video._enriched && (
+                //         <small style={{ display: 'block', fontSize: '8px', color: '#065f46', backgroundColor: '#d1fae5', padding: '2px 4px', borderRadius: '2px', marginTop: '4px', width: 'fit-content' }}>
+                //           Enriched
+                //         </small>
+                //       )}
+                //     </div>
                     
-                    <div className="video-status">
-                      {getStatusDisplay(video.status)}
-                    </div>
+                //     <div className="video-status">
+                //       {getStatusDisplay(video.status)}
+                //     </div>
                     
-                    <div className="video-meta">
-                      <div className="video-created-row">
-                        <div className="video-created">
-                          Created: {formatDate(video.created_at)}
-                        </div>
-                        {getActionButtons(video)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                //     <div className="video-meta">
+                //       <div className="video-created-row">
+                //         <div className="video-created">
+                //           Created: {formatDate(video.created_at)}
+                //         </div>
+                //         {getActionButtons(video)}
+                //       </div>
+                //     </div>
+                //   </div>
+                // </div>
               );
             })}
           </div>
