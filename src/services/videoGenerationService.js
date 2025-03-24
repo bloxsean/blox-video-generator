@@ -32,14 +32,17 @@ const apiClient = axios.create({
 // });
 
 export const generateVideo = async (data) => {
+  //console.log('generateVideo service called with data:', data);
   try {
-    console.log('generateVideo service called with data:', data);
+    console.log('VideoGenerationService-generateVideo service called with data:', data);
     
     const response = await apiClient.post('/generate-video', data);
-    console.log('generateVideo service response:', response.data);
+    console.log('VideoGenerationService-generateVideo service response:', response.data);
     
     // Extract video_id from the HeyGen API response structure
-    const videoId = response.data?.video_id;
+    const videoId = response.data?.video_id.data.video_id;
+    console.log('VideoGenerationService-generateVideo service videoId:', videoId);
+
     if (!videoId) {
       throw new Error('Missing video_id in API response');
     }
@@ -49,7 +52,7 @@ export const generateVideo = async (data) => {
       video_id: videoId
     };
   } catch (error) {
-    console.error('generateVideo service error:', error.response || error);
+    console.error('VideoGenerationService-generateVideo service error:', error.response || error);
     throw new Error(error.response?.data?.details || error.message);
   }
 };

@@ -209,6 +209,91 @@ app.get('/api/avatars', validateApiKey, async (req, res) => {
   }
 });
 
+
+// restore from git on 3-22-25
+app.post('/api/generate-video', validateApiKey, async (req, res) => {
+  console.log('==== GENERATE VIDEO REQUEST ====');
+  try {
+    console.log('Starting video generation with data:', JSON.stringify(req.body, null, 2));
+    
+    // Debug the request structure more deeply
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body constructor:', req.body.constructor.name);
+    console.log('Request body avatar (if any):', req.body.avatar);
+    
+    
+    // Prepare the request payload according to HeyGen v2 API structure
+    const payload = req.body;
+    // const payload = {
+    //   video_inputs: [
+    //     {
+    //       character: {
+    //         type: "avatar",
+    //         avatar_id: avatar.avatar_id,
+    //         scale: 1.0
+    //       },
+    //       voice: {
+    //         type: "text",
+    //         voice_id: voice.voice_id,
+    //         input_text: script
+    //       },
+    //       background: {
+    //         type: "color",
+    //         value: settings?.backgroundColor || "#f6f6fc"
+    //       }
+    //     }
+    //   ],
+    //   title: settings?.title || "Generated Video",
+    //   dimension: {
+    //     width: 1920,
+    //     height: 1080
+    //   }
+    // };
+    
+    console.log('Sending payload to HeyGen API:', JSON.stringify(payload, null, 2));
+    
+    // Call HeyGen's v2 video generation API with the correct endpoint
+    const response = await axios.post(`https://api.heygen.com/v2/video/generate`, payload, {
+      headers: {
+        'X-Api-Key': HEYGEN_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    
+    console.log('Video generation response:', response.data);
+    //Video generation response: { error: null, data: { video_id: 'd2a52555fcc24541bf5e9b3e6d66c17b' } }
+    
+    // Return the video ID from the HeyGen API
+    // res.json({
+    //   error: null,
+    //   video_id: response.data.video_id // Note: The direct structure from v2 API
+    // });
+    res.json({
+      error: null,
+      video_id: response.data// Note: The direct structure from v2 API
+    });
+  } catch (error) {
+    console.error('Error generating video:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+      stack: error.stack
+    });
+    
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to generate video',
+      details: error.response?.data?.message || error.message
+    });
+  }
+});
+
+//en
+
+
+
+
+
 // Field59 API endpoint
 // app.post('/api/field59/upload', async (req, res) => {
 //   console.log('Field59 Upload Request:', {
@@ -504,7 +589,7 @@ app.get('/api/videos/:videoId/status', validateApiKey, async (req, res) => {
     
     res.json({
       error: null,
-      status: statusMapping[response.data.status] || response.data.status,
+      status: response.data.status,
       progress: response.data.progress || 0
     });
   } catch (error) {

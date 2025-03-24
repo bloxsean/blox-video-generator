@@ -72,7 +72,23 @@ const Home = () => {
   return (
     <div className="home">
       <section className="hero-section">
-        <div className="hero-gradient" />
+        <div className="video-background">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            className="background-video"
+          >
+            <source 
+              src="https://files2.heygen.ai/aws_pacific/avatar_tmp/2a0e99c212a24819ad67a766bfe4e0da/45f52e34351f4d25968138e83837b0b1.mp4?Expires=1742905394&Signature=iWIL0MvOTQlSJ1iPVygxQDY58wsChxqSJKsDREStZmtd61JBnfnTFG5kJff5~F2ftZXS9rhhXwhUug-YS27NQGibVyAwd7777QFFhvxAdAsDtUMhqffsOCWjmlEA3vQxJyr~wkWpNbiVLmoDe6MMZ7ta8chgRNZpNVnrWODS9oEW2FAIsldDrjcmHb6U9xabV29CdmPqAH5pd5zOv3BvOg3xEN9curExxXY0an4GJ-EFu0PCkDvdX3k5pkhBwfETHeVHq0bw-kmmgTVUpFv6s7~gKjEPuqhq~NoJUHM~cBKUQxV3LBVe7TIm~vRT2tnnDbfzaxm52DAQr-VsbmEn0g__&Key-Pair-Id=K38HBHX5LX3X2H"
+              type="video/mp4" 
+            />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <div className="video-gradient-overlay"></div>
+        <div className="hero-content">
         <h1 className="hero-title">
           Create Professional Videos with AI
         </h1>
@@ -86,8 +102,10 @@ const Home = () => {
           Get Started
           <span>→</span>
         </button>
+        </div>
+       
       </section>
-
+    
       <section className="features-section">
         <h2 className="section-title">Powerful Features</h2>
         <div className="features-grid">

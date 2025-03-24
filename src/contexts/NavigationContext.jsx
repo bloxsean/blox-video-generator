@@ -23,7 +23,7 @@ const WORKFLOW_STEPS = [
     description: 'Pick an avatar that will speak your script.',
     tabName: 'avatars',
     guidanceMessage: 'Choose an avatar to continue',
-    nextStepMessage: 'Fantastic! Let’s write your sript.',
+    nextStepMessage: 'Fantastic! Let’s write your script.',
     severity: 'info'
   },
   {

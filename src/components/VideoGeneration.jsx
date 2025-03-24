@@ -17,7 +17,7 @@ import {
 import './VideoGeneration.css';
 
 const VideoGeneration = ({ testMode = false, testData = null }) => {
-  console.log('VideoGeneration component rendering attempt with testMode:', testMode);
+  //console.log('VideoGeneration component rendering attempt with testMode:', testMode);
   
   // Default test data for development
   const defaultTestData = {
@@ -48,7 +48,7 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
       const navContext = useNavigation();
       if (navContext) {
         contextData = navContext;
-        console.log('Navigation context loaded:', contextData);
+       // console.log('Navigation context loaded:', contextData);
       } else {
         console.warn('Navigation context is null, falling back to defaults');
       }
@@ -129,7 +129,7 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
   useEffect(() => {
     if (!videoId && !loading) {
       console.log('Initial load - checking if we should generate video');
-      console.log('Test mode is:', testMode);
+      // console.log('Test mode is:', testMode);
       
       // Only auto-generate in test mode or if specifically configured to do so
       if (testMode) {
@@ -216,15 +216,15 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
       console.log('%c 🎬 START VIDEO GENERATION CLICKED', 'background: #4CAF50; color: white; padding: 4px 8px; font-weight: bold;');
       
       // Check if we should skip
-      if (loading) {
-        console.log('Generation already in progress, skipping');
-        return;
-      }
+      // if (loading) {
+      //   console.log('Generation already in progress, skipping');
+      //   return;
+      // }
       
-      if (videoId) {
-        console.log('Video ID already exists, skipping:', videoId);
-        return;
-      }
+      // if (videoId) {
+      //   console.log('Video ID already exists, skipping:', videoId);
+      //   return;
+      // }
       
       // Set loading state
       setLoading(true);
@@ -233,11 +233,11 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
       setStatusMessage('Preparing video generation request...');
       
       // Log workflow state
-      console.log('Current workflow state:', {
-        selectedAvatar,
-        selectedVoice,
-        scriptContent
-      });
+      // console.log('Current workflow state:', {
+      //   selectedAvatar,
+      //   selectedVoice,
+      //   scriptContent
+      // });
       
       // Validate data
       if (!selectedAvatar) {
@@ -263,8 +263,8 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
         throw new Error(`Invalid voice data: missing voice_id (${JSON.stringify(selectedVoice)})`);
       }
       
-      console.log('Using avatarId:', avatarId);
-      console.log('Using voiceId:', voiceId);
+      // console.log('VideoGeneration-Using avatarId:', avatarId);
+      // console.log('VideoGeneration-Using voiceId:', voiceId);
       
       // Build request data
       const videoData = {
@@ -273,6 +273,7 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
           width: 1280,
           height: 720
         },
+        folder_id: "e42ee16fc003407da41c481ce8460106",
         title: `Generated Video - ${new Date().toLocaleString()}`,
         callback_id: "user_" + Math.floor(Math.random() * 100000),
         video_inputs: [
@@ -283,16 +284,16 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
               avatar_style: "normal",
               avatar_id: avatarId
             },
-            voice: {
-              voice_id: voiceId,
+            voice: {              
               type: "text",
+              voice_id: voiceId,
               input_text: scriptContent
             }
           }
         ]
       };
       
-      console.log('Submitting video generation with data:', videoData);
+      console.log('VideoGeneration-Submitting video generation with data:', videoData);
       
       // Send to API
       const response = await generateVideo(videoData);
@@ -363,18 +364,18 @@ const VideoGeneration = ({ testMode = false, testData = null }) => {
   try {
     // Add this useEffect to catch any errors during initialization
     useEffect(() => {
-      console.log('Component mounted successfully');
+     // console.log('Component mounted successfully');
       
       // Check if the button should be shown
-      console.log('Button visibility conditions:', {
-        videoId: !videoId,
-        loading: !loading,
-        testMode: !testMode
-      });
+      // console.log('Button visibility conditions:', {
+      //   videoId: !videoId,
+      //   loading: !loading,
+      //   testMode: !testMode
+      // });
       
       // This condition must be true for the button to show
       const buttonShouldBeVisible = !videoId && !loading && !testMode;
-      console.log('Button should be visible:', buttonShouldBeVisible);
+     // console.log('Button should be visible:', buttonShouldBeVisible);
     }, [videoId, loading, testMode]);
   } catch (err) {
     console.error('Error in VideoGeneration component:', err);

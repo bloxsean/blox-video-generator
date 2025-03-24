@@ -12,7 +12,7 @@ import axios from 'axios';
 // HeyGen API configuration - should be stored in environment variables in production
 const HEYGEN_API_KEY = import.meta.env.VITE_HEYGEN_API_KEY;
 const HEYGEN_API_URL = 'https://api.heygen.com/v1';
-
+const HEYGEN_FOLDER_ID = import.meta.env.VITE_HEYGEN_FOLDER_ID;
 // Create an axios instance for direct HeyGen API calls
 const heygenClient = axios.create({
   baseURL: HEYGEN_API_URL,
@@ -60,7 +60,7 @@ const fetchVideoListFromHeyGen = async (token = null) => {
     //console.log('videoDataService: Fetching basic video list from HeyGen...');
     
     // Call HeyGen's video.list endpoint
-    const response = await heygenClient.get('/video.list', { params });
+    const response = await heygenClient.get('/video.list?folder_id='+HEYGEN_FOLDER_ID, { params });
     
     // Validate response structure
     if (!response.data || !response.data.data || !Array.isArray(response.data.data.videos)) {

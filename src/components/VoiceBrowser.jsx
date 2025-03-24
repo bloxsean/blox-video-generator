@@ -5,7 +5,10 @@ import WorkflowStepper from './WorkflowStepper';
 import { useNavigation } from '../contexts/NavigationContext';
 import { FiPlay, FiPause, FiX } from 'react-icons/fi';
 import { LinearProgress } from '@mui/material';
-
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import IconButton from '@mui/material/IconButton';
+import StopCircleIcon from '@mui/icons-material/StopCircle';
+import Skeleton from '@mui/material/Skeleton';
 // Configure axios defaults
 const API_CONFIG = {
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
@@ -470,7 +473,7 @@ const VoiceBrowser = () => {
     return (
       <div className="voice-list" ref={voiceListRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
         {filteredVoices.map((voice, index) => (
-          <div 
+          <div className="voice-row" 
             key={voice.voice_id || voice.id || `voice-${index}`} 
             style={{
               display: 'flex',
@@ -478,18 +481,76 @@ const VoiceBrowser = () => {
               alignItems: 'center',
               padding: '16px',
               borderRadius: '8px',
-              backgroundColor: '#111827',
+              // backgroundColor: '#111827',
               border: isSelected(voice) ? '1px solid #38bdf8' : '1px solid #1f2937',
               transition: 'all 0.2s ease',
               width: '100%'
             }}
             onClick={() => handleVoiceSelect(voice)}
           >
+            <IconButton aria-label="delete" onClick={(e) => {
+                        e.stopPropagation();
+                        playVoiceSample(voice);
+                      }}>
+
+         {playingVoice === voice.voice_id ? (
+                        <>
+                          <StopCircleIcon style={{ color: 'red', fontSize: '44px' }} />
+                        </>
+                      ) : (
+                        <>
+                            <PlayCircleOutlineIcon style={{ color: '#38bdf8', fontSize: '44px' }} />
+                         
+                        </>
+                      )}
+
+              
+
+
+            </IconButton>
+             {/* <button 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '8px 16px',
+                        width: '140px',
+                        height: '40px',
+                        borderRadius: '0 6px 6px 0', // Rounded on right side only
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        border: 'none',
+                        cursor: 'pointer',
+                        backgroundColor: playingVoice === voice.voice_id ? '#dc2626' : '#1e40af',
+                        color: 'white'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playVoiceSample(voice);
+                      }}
+                    >
+                      {playingVoice === voice.voice_id ? (
+                        <>
+                          <FiPause style={{ marginRight: '6px' }} />
+                          <span>Stop</span>
+                        </>
+                      ) : (
+                        <>
+                          <FiPlay style={{ marginRight: '6px' }} />
+                          <span>Play</span>
+                        </>
+                      )}
+                    </button> */}
+
+
+
+
+
             <div style={{ flex: 1, marginRight: '20px' }}>
               <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 600, color: '#e5e7eb' }}>
                 {voice.voice_name || voice.name}
               </h3>
-              {console.log(voice)}
+              {/* {console.log(voice)} */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
                 {voice.language && (
                   <div style={{ fontSize: '14px', color: '#9ca3af' }}>
@@ -589,7 +650,7 @@ const VoiceBrowser = () => {
                     )}
                     
                     {/* Play/Stop button to the right */}
-                    <button 
+                    {/* <button 
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -621,7 +682,7 @@ const VoiceBrowser = () => {
                           <span>Play Preview</span>
                         </>
                       )}
-                    </button>
+                    </button> */}
                   </div>
                   
                   {/* Progress bar below the control strip */}

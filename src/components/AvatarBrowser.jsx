@@ -105,7 +105,7 @@ const AvatarBrowser = () => {
     try {
       const cachedAvatars = localStorage.getItem(STORAGE_KEYS.AVATARS);
       const timestamp = localStorage.getItem(STORAGE_KEYS.TIMESTAMP);
-      console.log('cachedAvatars', cachedAvatars);
+      //console.log('cachedAvatars', cachedAvatars);
       if (!cachedAvatars || !timestamp) return null;
       
       const now = Date.now();

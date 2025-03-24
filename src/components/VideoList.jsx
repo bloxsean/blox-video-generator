@@ -10,6 +10,7 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { MdDownloadForOffline } from "react-icons/md";
 import AvatarCard from './cards/avatarCard';
 import { Grid } from '@mui/material';
+import Alert from '@mui/material/Alert';
 
 const VideoList = () => {
   const [videos, setVideos] = useState([]);
@@ -491,8 +492,9 @@ const VideoList = () => {
       
       {videos.length === 0 ? (
         <div className="no-videos-message">
-          <p>You don't have any videos yet.</p>
-          <p>Create a new video using the Script tab!</p>
+          <Alert severity="info">
+            You don't have any videos yet. 
+          </Alert>        
         </div>
       ) : (
         <>

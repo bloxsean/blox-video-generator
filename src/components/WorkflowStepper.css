@@ -3,9 +3,9 @@
   max-width: 1200px;
   margin: 32px auto 2rem auto;
   padding: 2.5rem;
-  background-color: rgba(15, 23, 42, 0.6);
+  /* background-color: rgba(15, 23, 42, 0.6); */
   border-radius: 1rem;
-  border: 1px solid rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(133, 133, 134, 0.1);
   backdrop-filter: blur(8px);
 }
 

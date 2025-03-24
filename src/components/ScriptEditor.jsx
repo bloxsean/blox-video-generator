@@ -36,7 +36,7 @@ const ScriptEditor = () => {
     activeStep
   } = workflowState;
 
-  const [localScript, setLocalScript] = useState(scriptContent || '');
+  const [localScript, setLocalScript] = useState(scriptContent || 'Welcome to BLOX AI, the revolutionary video creation tool that makes producing professional videos easier than ever.');
   const [estimatedDuration, setEstimatedDuration] = useState(0);
   const [wordCount, setWordCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
